@@ -1,0 +1,22 @@
+{
+  "name": "pre-entrega-i",
+  "version": "1.0.0",
+  "description": "API de compra y venta de entradas para eventos",
+  "license": "ISC",
+  "author": "Gonzalez David Ezequiel",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "nodemon": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "mongoose": "^9.9.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
