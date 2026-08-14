@@ -1,7 +1,9 @@
 import app from './app.js';
 import { connectionDB } from './config/config.database.js';
 import { PORT } from './config/config.port.js';
+import dotenv from 'dotenv';
 
+dotenv.config();
 connectionDB();
 
 const port = PORT();
