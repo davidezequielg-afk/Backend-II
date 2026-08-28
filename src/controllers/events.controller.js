@@ -1,3 +1,3 @@
 export const eventsController = (req, res) => {
-  res.json({ "status": "success", "payload": [] });
+  res.status(200).json({ "status": "success", "payload": [] });
 };
