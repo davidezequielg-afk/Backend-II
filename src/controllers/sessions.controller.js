@@ -25,6 +25,15 @@ export const loginController = async (req, res) => {
   }
 }
 
+export const logoutController = (req, res) => {
+  res.clearCookie("currentUser", {
+    httpOnly: true,
+    sameSite:"lax",
+    secure: NODE_ENV === "production"
+  });
+  res.status(200).json({ message: 'Cierre de sesión exitoso' });
+}
+
 export const currentUserController = (req, res) => {
   if (req.user) {
     res.status(200).json({ user: req.user });
