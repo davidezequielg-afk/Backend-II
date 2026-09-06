@@ -9,7 +9,7 @@ const routerSession = Router();
 
 routerSession.post('/register', registerController);
 routerSession.post('/login', loginController);
-routerSession.post('/logout', logoutController);
+routerSession.post('/logout', authMiddleware, logoutController);
 routerSession.get('/current', authMiddleware, currentUserController);
 
 export default routerSession;
