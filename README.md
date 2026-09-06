@@ -125,40 +125,117 @@ Esn este caso no se esperan ni se necesitan campos para completar, ya que se hac
 
 - GET /api/health .
 Aqui se vera si el servidor se encuentra vivo (es decir en uso correcto).
+- Respuesta esperada:
+
+```json
+{
+  "status": "ok",
+  "message": "Servidor activo"
+}
+```
 
 ![GET /api/health](images/GET%20-api-health..png)
 
 - POST /api/sessions/register .
 En la siguiente imagen se ve como y cuales son los campos necesarios para la creacion de un o los usuario/s.
+- Respuesta esperada:
+
+```json
+{
+    "message": "Usuario registrado exitosamente",
+    "user": {
+        "id": "id-del-usuario",
+        "first_name": "nombre-de-usuario",
+        "last_name": "apellido-de-usuario",
+        "email": "juan@example.com",
+        "role": "user"
+    }
+}
+```
 
 ![POST /api/sessions/register](images/POST%20-api-sessions-register.png)
 
-- POST /api/sessions/register . (Con usuraio duplicado)
+- POST /api/sessions/register . (Con usuario duplicado)
 En la siguiente imagen se ve como y cuales son los campos necesarios para la creacion de un usuario ya existente
+- Respuesta esperada:
+
+```json
+{
+  "message": "El email ya está registrado"
+}
+```
 
 ![POST /api/sessions/register duplicado](images/POST%20-api-sessions-register%20duplicado.png)
 
 - GET /api/sessions/current .
 Aqui vemos el current (lista de sesiones) antes de realizar el login correspondiente para el uso de la sesion.
+- Respuesta esperada:
+
+```json
+{
+  "message": "Usuario no autenticado"
+}
+```
 
 ![GET /api/sessions/current](images/GET%20-api-sessions-current%20no%20login.png)
 
 - POST /api/sessions/login .
 En esta se demuestran los datos y campos necesarios para realizar un login exitoso.
+- Respuesta esperada:
+
+```json
+{
+  "message": "Inicio de sesión exitoso"
+}
+```
 
 ![POST /api/sessions/login](images/POST%20-api-sessions-login.png)
 
+- POST /api/sessions/login .(Con datos incorrectos)
+En esta se demuestran los datos y campos necesarios para realizar un login defectuoso.
+- Respuesta esperada:
+
+```json
+{
+  "message": "Credenciales inválidas"
+}
+```
+
 - GET /api/sessions/current .
 Aqui vemos el current (lista de sesiones) luego de realizar el login correspondiente para el uso de la sesion.
+- Respuesta esperada:
 
+```json
+{
+  "user": {
+    "id": "id-del-usuario",
+    "email": "juan@example.com",
+    "role": "user"
+  }
+}
+```
 ![GET /api/sessions/current](images/GET%20-api-sessions-current%20login.png)
 
 - POST /api/sessions/logout .
 En esta se muestra la respuesta de un logout exitoso.
+- Respuesta esperada:
+
+```json
+{
+  "message": "Cierre de sesión exitoso"
+}
+```
 
 ![POST /api/sessions/logout logeado](images/POST%20-api-sessions-logout%20logeado.png)
 
 - POST /api/sessions/logout .
 En esta se muestra la respuesta de un logout no exitoso, por usuario no validado.
+- Respuesta esperada:
+
+```json
+{
+  "message": "Usuario no autenticado"
+}
+```
 
 ![POST /api/sessions/logout no logeado](images/POST%20-api-sessions-logout%20no%20logeado.png)
