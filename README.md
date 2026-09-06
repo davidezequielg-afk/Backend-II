@@ -61,7 +61,7 @@ Aca se encuentran las fuciones que reutilizamos en todo el codigo. Cuidado con c
 
 - GET /api/health . Genera una respuesta de si el servidor se encuentra en funcionamiento.
 
-- GET /api/sessions/current . Genera una lista de las sesiones activas dentro del mismo navegador.
+- GET /api/sessions/current . Genera una lista de los datos de la cuenta logeada.
 
 - POST /api/sessions/register . Agrega con este endpoint a los usuarios nuevos.
 
