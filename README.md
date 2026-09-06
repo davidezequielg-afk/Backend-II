@@ -57,17 +57,17 @@ Aca se encuentran las fuciones que reutilizamos en todo el codigo. Cuidado con c
 
 ## Endpoints disponibles.
 
-- GET /api/events .
+- GET /api/events . Genera una lista de los eventos disponibles.
 
-- GET /api/health .
+- GET /api/health . Genera una respuesta de si el servidor se encuentra en funcionamiento.
 
-- GET /api/sessions/current .
+- GET /api/sessions/current . Genera una lista de las sesiones activas dentro del mismo navegador.
 
-- POST /api/sessions/register .
+- POST /api/sessions/register . Agrega con este endpoint a los usuarios nuevos.
 
-- POST /api/sessions/login .
+- POST /api/sessions/login . Este endpoint es el que te permite logear a tu cuenta de la plataforma.
 
-- POST /api/sessions/logout .
+- POST /api/sessions/logout . Este endpoint realiza la actividad de cierre de sesion de la cuenta.
 
 
 ### Respuestas disponibles
