@@ -36,7 +36,7 @@ export const logoutController = (req, res) => {
 
 export const currentUserController = (req, res) => {
   if (req.user) {
-    res.status(200).json({ user: req.user });
+    res.status(200).json({ user: { id: req.user.id, email: req.user.email, role: req.user.role } });
   } else {
     res.status(401).json({ message: 'Usuario no autenticado' });
   }
