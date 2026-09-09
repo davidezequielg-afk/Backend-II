@@ -1,5 +1,6 @@
 import { registerUser, loginUser } from '../services/sessions.service.js';
 import { NODE_ENV } from '../config/config.jwt.js';
+import { JWT_EXPIRES_IN } from '../config/config.jwt.js';
 
 export const registerController = async (req, res) => {
   try { const createdUser = await registerUser(req.body);
@@ -14,7 +15,7 @@ export const loginController = async (req, res) => {
   const { token } = await loginUser(req.body);
   res.cookie("currentUser", token, {
     httpOnly: true,
-    maxAge: 3600000,
+    maxAge: JWT_EXPIRES_IN, 
     sameSite:"lax",
     secure: NODE_ENV === "production"
   });
