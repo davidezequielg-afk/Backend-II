@@ -1,10 +1,10 @@
 import { Router } from 'express';
+import passport from 'passport';
 import { registerController } from '../../controllers/sessions.controller.js';
 import { loginController } from '../../controllers/sessions.controller.js';
 import { authMiddleware } from '../../middlewares/auth.middleware.js';
 import { currentUserController } from '../../controllers/sessions.controller.js';
 import { logoutController } from '../../controllers/sessions.controller.js';
-import passport from 'passport';
 
 const routerSession = Router();
 
