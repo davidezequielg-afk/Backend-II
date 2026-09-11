@@ -10,7 +10,7 @@ const routerSession = Router();
 
 routerSession.post('/register', passport.authenticate('register' , { session: false }), registerController);
 routerSession.post('/login', passport.authenticate('login', { session: false }), loginController);
-routerSession.post('/logout', authMiddleware, logoutController);
-routerSession.get('/current', authMiddleware, currentUserController);
+routerSession.post('/logout', logoutController);
+routerSession.get('/current', passport.authenticate('current', { session: false }), currentUserController);
 
 export default routerSession;
