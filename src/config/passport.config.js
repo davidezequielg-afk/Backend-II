@@ -2,7 +2,7 @@ import passport  from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
 import { findUserByEmail, saveUser } from '../repositories/users.repository.js';
-import { hashPassword } from '../utils/hash.js';
+import { hashPassword , comparePassword } from '../utils/hash.js';
 
 export const registerStrategy = new LocalStrategy(
   { usernameField: 'email', passwordField: 'password', passReqToCallback: true },
