@@ -63,3 +63,38 @@ export const registerStrategy = new LocalStrategy(
     }
   });
   passport.use('register', registerStrategy);
+
+export const loginStrategy = new LocalStrategy(
+  { usernameField: 'email', passwordField: 'password' },
+  async (email, password, done) => {
+  try {
+      if (!email || !password) {
+          const error = new Error("Faltan campos obligatorios");
+          error.statusCode = 400;
+          return done(error);
+        }
+  const normalizedEmail = email.trim().toLowerCase();
+  const user = await findUserByEmail(normalizedEmail);
+    if (!user) {
+      const error = new Error("Credenciales inválidas");
+        error.statusCode = 401;
+      return done(error);
+    }
+  const passwordMatch = await comparePassword(password, user.password);
+    if (!passwordMatch) {
+      const error = new Error("Credenciales inválidas");
+        error.statusCode = 401;
+      return done(error);
+    }
+  return done(null, {
+      id: user._id,
+      email: user.email,
+      role: user.role,
+  });
+  }
+  catch (error) {
+    return done(error);
+  }
+  }
+);
+passport.use('login', loginStrategy);
