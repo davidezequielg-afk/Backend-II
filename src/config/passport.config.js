@@ -3,6 +3,10 @@ import { Strategy as LocalStrategy } from 'passport-local';
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
 import { findUserByEmail, saveUser } from '../repositories/users.repository.js';
 import { hashPassword , comparePassword } from '../utils/hash.js';
+import { JWT_SECRET } from '../config/config.jwt.js';
+
+
+// estrategia de registro
 
 export const registerStrategy = new LocalStrategy(
   { usernameField: 'email', passwordField: 'password', passReqToCallback: true },
@@ -64,6 +68,9 @@ export const registerStrategy = new LocalStrategy(
   });
   passport.use('register', registerStrategy);
 
+
+// estrategia de login
+
 export const loginStrategy = new LocalStrategy(
   { usernameField: 'email', passwordField: 'password' },
   async (email, password, done) => {
@@ -98,3 +105,21 @@ export const loginStrategy = new LocalStrategy(
   }
 );
 passport.use('login', loginStrategy);
+
+
+// estrategia del current con JWT
+
+const cookieExtractor = (req) => {
+  return req?.cookies?.currentUser || null;
+};
+
+export const currentUserStrategy = new JwtStrategy(
+  {
+    jwtFromRequest: ExtractJwt.fromExtractors([cookieExtractor]),
+    secretOrKey: JWT_SECRET,
+  },
+  (jwtPayload, done) => {
+    return done(null, jwtPayload);
+  }
+);
+passport.use('current', currentUserStrategy);
