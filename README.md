@@ -226,18 +226,6 @@ En esta se muestra la respuesta de un logout exitoso.
 }
 ```
 
-![POST /api/sessions/logout logeado](images/POST%20-api-sessions-logout%20logeado.png)
-
-- POST /api/sessions/logout .
-En esta se muestra la respuesta de un logout no exitoso, por usuario no validado.
-- Respuesta esperada:
-
-```json
-{
-  "message": "Usuario no autenticado"
-}
-```
-
 ![POST /api/sessions/logout no logeado](images/POST%20-api-sessions-logout%20no%20logeado.png)
 
 ## Estrategias de autenticación
