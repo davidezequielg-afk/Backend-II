@@ -239,3 +239,8 @@ En esta se muestra la respuesta de un logout no exitoso, por usuario no validado
 ```
 
 ![POST /api/sessions/logout no logeado](images/POST%20-api-sessions-logout%20no%20logeado.png)
+
+## Estrategias de autenticación
+### Para uso de autenticadores externos
+- Desde ahora la autenticación se encuentra centralizada en `src/config/passport.config.js` mediante el uso de las estrategias de Passport: `register`, `login` y `current`
+- Esto permitirá agregar futuros proveedores de autenticación como por ejemplo, Google o GitHub, dado que no haría falta cambiar o modificar el archivo `app.js`
