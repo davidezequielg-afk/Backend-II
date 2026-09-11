@@ -15,8 +15,6 @@ const app = express();
 
 app.use(express.json());
 app.use(cookieParser());
-app.use('register', registerStrategy);
-app.use('login', loginStrategy);
 app.use(passport.initialize());
 
 app.use('/api/health', HealthStatus);
