@@ -4,11 +4,12 @@ import { loginController } from '../../controllers/sessions.controller.js';
 import { authMiddleware } from '../../middlewares/auth.middleware.js';
 import { currentUserController } from '../../controllers/sessions.controller.js';
 import { logoutController } from '../../controllers/sessions.controller.js';
+import passport from 'passport';
 
 const routerSession = Router();
 
-routerSession.post('/register', registerController);
-routerSession.post('/login', loginController);
+routerSession.post('/register', passport.authenticate('register' , { session: false }), registerController);
+routerSession.post('/login', passport.authenticate('login', { session: false }), loginController);
 routerSession.post('/logout', authMiddleware, logoutController);
 routerSession.get('/current', authMiddleware, currentUserController);
 
