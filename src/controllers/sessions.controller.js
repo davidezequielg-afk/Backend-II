@@ -1,5 +1,5 @@
 import { NODE_ENV } from '../config/config.jwt.js';
-import { JWT_EXPIRES_IN } from '../config/config.jwt.js';
+import { JWT_EXPIRES_IN_MS } from '../config/config.jwt.js';
 import { generateToken } from '../utils/jwt.js';
 
 export const registerController = async (req, res) => {
@@ -13,7 +13,7 @@ export const loginController = async (req, res) => {
   const token  = generateToken(req.user);
   res.cookie("currentUser", token, {
     httpOnly: true,
-    maxAge: JWT_EXPIRES_IN, 
+    maxAge: JWT_EXPIRES_IN_MS, 
     sameSite:"lax",
     secure: NODE_ENV === "production"
   });
