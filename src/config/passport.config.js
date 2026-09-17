@@ -105,21 +105,3 @@ export const loginStrategy = new LocalStrategy(
   }
 );
 passport.use('login', loginStrategy);
-
-
-// estrategia del current con JWT
-
-const cookieExtractor = (req) => {
-  return req?.cookies?.currentUser || null;
-};
-
-export const currentUserStrategy = new JwtStrategy(
-  {
-    jwtFromRequest: ExtractJwt.fromExtractors([cookieExtractor]),
-    secretOrKey: JWT_SECRET,
-  },
-  (jwtPayload, done) => {
-    return done(null, jwtPayload);
-  }
-);
-passport.use('current', currentUserStrategy);
