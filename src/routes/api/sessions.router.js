@@ -15,7 +15,7 @@ routerSession.post('/register', passport.authenticate('register' , { session: fa
 routerSession.post('/login', passport.authenticate('login', { session: false }), loginController);
 routerSession.post('/logout', logoutController);
 routerSession.get('/current', authenticate, currentUserController);
-routerEvent.get('/events', eventsController);
-routerEvent.post('/events', authenticate, authorize('admin', 'organizer'), eventsController);
+routerEvent.get('/', eventsController);
+routerEvent.post('/', authenticate, authorize('admin', 'organizer'), eventsController);
 
 export default routerSession;
