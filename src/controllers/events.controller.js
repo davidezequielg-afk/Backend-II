@@ -1,6 +1,6 @@
 import Event from "../models/Event.js";
 
-export const createEventController = async (req, res) => {
+export const createEventController = async (req, res, next) => {
   try {
     const { title, description, date, location } = req.body;
     const event = await Event.create({
