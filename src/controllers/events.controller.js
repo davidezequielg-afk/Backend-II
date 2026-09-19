@@ -1,5 +1,16 @@
 import Event from "../models/Event.js";
 
+
+export const eventsController = async (req, res, next) => {
+  try {
+    const events = await Event.find();
+    res.status(200).json({ status: 'success', payload: events });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
 export const createEventController = async (req, res, next) => {
   try {
     const { title, description, date, location } = req.body;
@@ -14,10 +25,6 @@ export const createEventController = async (req, res, next) => {
   } catch (error) {
    next(error);
   }
-};
-
-export const eventsController = (req, res) => {
-  res.status(200).json({ "status": "success", "payload": [] });
 };
 
 export const updateEventController = async (req, res,next) => {
