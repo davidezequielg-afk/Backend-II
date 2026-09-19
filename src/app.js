@@ -8,7 +8,6 @@ import routerUser from './routes/api/users.router.js';
 import cookieParser from 'cookie-parser';
 
 
-
 import './config/passport.config.js';
 import { errorMiddleware } from './middlewares/error.middleware.js';
 
