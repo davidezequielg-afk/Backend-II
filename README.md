@@ -134,6 +134,13 @@ A continuacion se ejemplifica la manera en la que debe estar el json de los dato
 ### Campos necesarios.
 Esn este caso no se esperan ni se necesitan campos para completar, ya que se hace borrando las cookies del login desde cada ordenador y de manera indeoendiente con cada usuario.
 
+## Creacion de eventos.
+
+### Campos necesarios y esperados.
+- `title`: Titulo del evento.
+- `description`: Descripcion del evento a crear.
+- `date`: Fecha y horario del evento.
+- `location`: Lugar a llevarse a cabo el evento.
 
 ## Evidencias de Uso.
 ### A continuacios se veran, en formato de imagenes, las evidencias de como se verian el uso de las RUTAS mediante el uso del programa de POSTMAN.
@@ -217,7 +224,7 @@ En esta prueba se puede ver cuales son los clientes creados, solo puede verlo un
 }
 ```
 
-! [GET /api/users (vista solo admin)](images/GET%20-api-users(admin).png)
+![GET /api/users (vista solo admin)](images/GET%20-api-users(admin).png)
 
 - GET /api/events .
 Aquí se veran los eventos que fueron creados.
@@ -240,7 +247,7 @@ Aquí se veran los eventos que fueron creados.
 }
 ```
 
-! [GET /api/events](images/GET%20-api-events.png)
+![GET /api/events](images/GET%20-api-events.png)
 
 #### Endpoints POST
 
@@ -304,6 +311,17 @@ En esta se muestra la respuesta de un logout exitoso.
 ```json
 {
   "message": "Cierre de sesión exitoso"
+}
+```
+
+![POST /api/sessions/logout](images/POST%20-api-sessions-logout%20logeado.png)
+
+- POST /api/sessions/logout .(sin iniciar sesion antes)
+En esta prueba se demuestra que primero hay que iniciar sesion antes de hacer un logout
+- Respuesta esperada:
+```json
+{
+  "message": "Usuario no autenticado"
 }
 ```
 
