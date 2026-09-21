@@ -55,13 +55,21 @@ Aca vamos a tener contenido toda la logica que tendra el negocio.
 - utils: 
 Aca se encuentran las fuciones que reutilizamos en todo el codigo. Cuidado con cambiarlas ya que podemos romper el sistema de gestion.
 
+## Roles y autorizaciones.
+Nos encontraremos con 3 roles, cada uno con sus permisos.
+- 'User': usuario basico, no tiene ningun permiso de modificación en ningun aspecto, exepto de su email y contraseña.
+- 'Organizer': usuario con accesos privilejiados, tiene permisos de creacion y modificación de eventos (siempre y cuando sean los creados por el mismo, si algun evento está creado por otro organizer no podran ser modificados).
+- 'admin': usuario con acceso completo, tiene permisos para realizar cualquier modificación de eventos, sin importar que usuario organizador lo haya creado.
+
 ## Endpoints disponibles.
 
 - GET /api/events . Genera una lista de los eventos disponibles.
 
 - GET /api/health . Genera una respuesta de si el servidor se encuentra en funcionamiento.
 
-- GET /api/sessions/current . Genera una lista de los datos de la cuenta logeada.
+- GET /api/sessions/current . Genera una lista de los datos de la cuenta logeada, solo puede ser vista por un admin.
+
+- GET /api/users . Permite ver los usuarios que se registraron. Solo permitido para admin.
 
 - POST /api/sessions/register . Agrega con este endpoint a los usuarios nuevos.
 
@@ -69,13 +77,20 @@ Aca se encuentran las fuciones que reutilizamos en todo el codigo. Cuidado con c
 
 - POST /api/sessions/logout . Este endpoint realiza la actividad de cierre de sesion de la cuenta.
 
+- POST /api/events . Este endpoint agrega los eventos nuevos, siempre y cuando haya autorizacion de admin u organizador.
+
+- PUT /api/events/:id . Este permite la actualización de algun evento. Solo admitido para admin, y organizer (solo puede sus propios eventos).
+
 
 ### Respuestas disponibles
 
+- 200: usuario logeado,
 - 201: usuario registrado exitosamente,
 - 400: campos incompletos o formato inválido,
+- 401: no existe una cookie de sesión, el token es inválido o venció,
+- 403: el usuario está autenticado, pero su rol no cuenta con el permisos para realizar accion,
 - 409: email duplicado (email ya registrado),
-- 500: error interno del servidor
+- 500: error interno del servidor,
 
 ## Registro de Usuarios.
 
