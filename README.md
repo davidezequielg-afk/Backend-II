@@ -304,6 +304,8 @@ En esta se demuestran los datos y campos necesarios para realizar un login defec
 }
 ```
 
+![POST /api/sessions/login (con datos incorrectos)](images/POST%20-api-sessions-login%20datos%20incorrectos.png)
+
 - POST /api/sessions/logout .
 En esta se muestra la respuesta de un logout exitoso.
 - Respuesta esperada:
