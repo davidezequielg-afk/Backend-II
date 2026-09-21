@@ -138,6 +138,8 @@ Esn este caso no se esperan ni se necesitan campos para completar, ya que se hac
 ## Evidencias de Uso.
 ### A continuacios se veran, en formato de imagenes, las evidencias de como se verian el uso de las RUTAS mediante el uso del programa de POSTMAN.
 
+
+#### Endpoints GET
 - GET /api/health .
 Aqui se vera si el servidor se encuentra vivo (es decir en uso correcto).
 - Respuesta esperada:
@@ -150,6 +152,97 @@ Aqui se vera si el servidor se encuentra vivo (es decir en uso correcto).
 ```
 
 ![GET /api/health](images/GET%20-api-health..png)
+
+- GET /api/sessions/current .
+Aqui vemos el current (lista de sesiones) antes de realizar el login correspondiente para el uso de la sesion.
+- Respuesta esperada:
+
+```json
+{
+  "message": "Usuario no autenticado"
+}
+```
+
+![GET /api/sessions/current](images/GET%20-api-sessions-current%20no%20login.png)
+
+- GET /api/sessions/current .
+Aqui vemos el current (lista de sesiones) luego de realizar el login correspondiente para el uso de la sesion.
+- Respuesta esperada:
+
+```json
+{
+  "user": {
+    "id": "id-del-usuario",
+    "email": "juan@example.com",
+    "role": "user"
+  }
+}
+```
+
+![GET /api/sessions/current](images/GET%20-api-sessions-current%20login.png)
+
+- GET /api/users .
+En esta prueba se puede ver cuales son los clientes creados, solo puede verlo un administrador (admin).
+- Respuesta esperada:
+
+```json
+{
+  "status": "success",
+  "payload": [
+    {
+      "id": "id-del-usuario",
+      "first_name": "nombre-de-usuario",
+      "last_name": "apellido-de-usuario",
+      "email": "juan@example.com",
+      "role": "user",
+      "__v": 0
+    }
+    {
+      "_id": "id-del-usuario",
+      "first_name": "admin",
+      "last_name": "admin",
+      "email": "admin@example.com",
+      "role": "admin",
+      "__v": 0
+    },
+    {
+      "_id": "id-del-usuario",
+      "first_name": "organizer",
+      "last_name": "organizer",
+      "email": "organizer@example.com",
+      "role": "organizer",
+      "__v": 0
+    }
+  ]
+}
+```
+
+! [GET /api/users (vista solo admin)](images/GET%20-api-users(admin).png)
+
+- GET /api/events .
+Aquí se veran los eventos que fueron creados.
+- Repuesta esperada:
+
+```json
+{
+  "status": "success",
+  "payload": [
+    {
+      "_id": "id-del-evento",
+      "title": "titulo-del-evento",
+      "description": "descripcion-del-evento",
+      "date": "dia-y-horario-del-evento-(2000-01-13T22:00:00.000Z)",
+      "location": "lugar-del-evento",
+      "organizer": "id-del-creador-del-evento",
+      "__v": 0
+    }
+  ]
+}
+```
+
+! [GET /api/events](images/GET%20-api-events.png)
+
+#### Endpoints POST
 
 - POST /api/sessions/register .
 En la siguiente imagen se ve como y cuales son los campos necesarios para la creacion de un o los usuario/s.
@@ -182,18 +275,6 @@ En la siguiente imagen se ve como y cuales son los campos necesarios para la cre
 
 ![POST /api/sessions/register duplicado](images/POST%20-api-sessions-register%20duplicado.png)
 
-- GET /api/sessions/current .
-Aqui vemos el current (lista de sesiones) antes de realizar el login correspondiente para el uso de la sesion.
-- Respuesta esperada:
-
-```json
-{
-  "message": "Usuario no autenticado"
-}
-```
-
-![GET /api/sessions/current](images/GET%20-api-sessions-current%20no%20login.png)
-
 - POST /api/sessions/login .
 En esta se demuestran los datos y campos necesarios para realizar un login exitoso.
 - Respuesta esperada:
@@ -216,21 +297,6 @@ En esta se demuestran los datos y campos necesarios para realizar un login defec
 }
 ```
 
-- GET /api/sessions/current .
-Aqui vemos el current (lista de sesiones) luego de realizar el login correspondiente para el uso de la sesion.
-- Respuesta esperada:
-
-```json
-{
-  "user": {
-    "id": "id-del-usuario",
-    "email": "juan@example.com",
-    "role": "user"
-  }
-}
-```
-![GET /api/sessions/current](images/GET%20-api-sessions-current%20login.png)
-
 - POST /api/sessions/logout .
 En esta se muestra la respuesta de un logout exitoso.
 - Respuesta esperada:
@@ -242,6 +308,49 @@ En esta se muestra la respuesta de un logout exitoso.
 ```
 
 ![POST /api/sessions/logout no logeado](images/POST%20-api-sessions-logout%20no%20logeado.png)
+
+- POST /api/events .
+En esta prueba veremos como subir un evento, (solo admitido para organizers, y admins).
+- Respuesta esperada:
+```json
+{
+  "status": "success",
+  "payload": {
+    "title": "nombre-del-evento",
+    "description": "decripcion-del-evento",
+    "date": "dia-horario-del-evento (2026-11-21T00:00:00.000Z)",
+    "location": "lugar-del-evento",
+    "organizer": "id-del-creador",
+    "_id": "id-del-evento",
+    "__v": 0
+  }
+}
+```
+
+![POST /api/events](images/POST%20-api-events.png)
+
+#### Endpoints PUT.
+
+- PUT /api/events .
+En este endpoint veremos como actualizar un evento, solo para admins y organizers, (los admins, pueden actualizar cualquier evento. Un organizer solo los creados por el mismo).
+- Respuesta esperada:
+```json
+{
+  "status": "success",
+  "message": "Evento actualizado"
+  "payload": {
+    "_id": "id-del-evento",
+    "title": "titulo-del-evento",
+    "description": "descripcion-del-evento",
+    "date": "dia-y-horario-del-evento(2026-11-22T00:00:00.000Z)",
+    "location": "lugar-del-evento",
+    "organizer": "id-del-cliente-que-actualizó",
+    "__v": 0
+  }
+}
+```
+
+![PUT /api/events](images/PUT%20-api-events.png)
 
 ## Estrategias de autenticación
 ### Para uso de autenticadores externos
