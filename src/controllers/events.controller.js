@@ -41,7 +41,7 @@ export const updateEventController = async (req, res,next) => {
       return res.status(403).json({ "status": "error", "message": "No tienes permiso para actualizar este evento" });
     }
     const updatedEvent = await Event.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    res.status(200).json({ "status": "success", "payload": updatedEvent });
+    res.status(200).json({ "status": "success", "message": "Evento actualizado", "payload": updatedEvent });
   } catch (error) {
     next(error);
   }
