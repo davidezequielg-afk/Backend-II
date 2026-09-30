@@ -5,7 +5,12 @@ const eventSchema = new Schema({
     description: {type: String, required: true},
     date: {type: Date, required: true},
     location: {type: String, required: true},
-    organizer: {type: Schema.Types.ObjectId, ref: 'User', required: true},
+    category: {type: String, required: true},
+    capacity: {type: Number, required: true, min: 1, validate :{ validator: Number.isInteger,
+        message: 'La capacidad del Evento debe ser un numero entero. No se aceptan numeros decimales'}},
+    price: {type: Number, min: 0, required: true,},
+    status: {type: String, enum: ['draft', 'published', 'cancelled', 'finished'], default: 'draft', required: true},
+    organizer: {type: Schema.Types.ObjectId, ref: 'User', required: true}
 });
 
 const Event = model('Event', eventSchema);
