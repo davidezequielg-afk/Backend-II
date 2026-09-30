@@ -4,7 +4,9 @@ export const createEvent = async (eventData) => {
     const eventDate = new Date(eventData.date);
     const nowDate = new Date();
     if (eventDate < nowDate) {
-        throw new Error("El evento no puede tener una fecha anterior a la actual");
+        const error = new Error("El evento no puede tener una fecha anterior a la actual");
+        error.statusCode = 400;
+        throw error;
     }
     return await saveEvent(eventData);
 };
