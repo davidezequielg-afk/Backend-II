@@ -1,5 +1,5 @@
 import Event from "../models/Event.js";
-
+import { createEvent, updateEvent } from "../services/events.service.js";
 
 export const eventsController = async (req, res, next) => {
   try {
@@ -10,38 +10,20 @@ export const eventsController = async (req, res, next) => {
   }
 };
 
-
 export const createEventController = async (req, res, next) => {
   try {
-    const { title, description, date, location } = req.body;
-    const event = await Event.create({
-      title,
-      description,
-      date,
-      location,
-      organizer: req.user.id
-    });
-    res.status(201).json({ "status": "success", "payload": event });
+    const { title, description, category, date, location, capacity, price } = req.body;
+    const event = await createEvent({ title, description, category, date, location, capacity, price }, req.user.id);
+    res.status(201).json({ status: 'success', payload: event });
   } catch (error) {
-   next(error);
+    next(error);
   }
 };
 
-export const updateEventController = async (req, res,next) => {
+export const updateEventController = async (req, res, next) => {
   try {
-    const findEventUpdate = await Event.findById(req.params.id);
-    if (!findEventUpdate) {
-      return res.status(404).json({ "status": "error", "message": "No se encuentra el evento" });
-    }
-    const userRole = req.user.role;
-    if (
-      req.user.id !== findEventUpdate.organizer.toString() &&
-      userRole !== 'admin'
-    ) {
-      return res.status(403).json({ "status": "error", "message": "No tienes permiso para actualizar este evento" });
-    }
-    const updatedEvent = await Event.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    res.status(200).json({ "status": "success", "message": "Evento actualizado", "payload": updatedEvent });
+    const updatedEvent = await updateEvent(req.params.id, req.body, req.user);
+    res.status(200).json({ status: 'success', message: 'Evento actualizado', payload: updatedEvent });
   } catch (error) {
     next(error);
   }
