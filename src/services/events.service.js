@@ -47,3 +47,30 @@ export const getEvent = async (id) => {
         throw fail(404, "No se encuentra el evento");
     return event;
 };
+
+const STATUS_VALUES = ['draft', 'published', 'cancelled', 'finished'];
+
+export const updateEventStatus = async (id, status, user) => {
+    const event = await getEventById(id);
+    if (!event) throw fail(404, "No se encuentra el evento");
+    if (user.role !== 'admin' && event.organizer.toString() !== user.id) {
+        throw fail(403, "No tienes permiso para actualizar este evento");
+    }
+    if (event.status === 'cancelled') throw fail(400, "Un evento cancelado no puede modificarse");
+    if (!STATUS_VALUES.includes(status)) {
+        throw fail(400, "Estado de evento no válido");
+    }
+    if(status === 'published' && event.status !== 'draft') {
+        throw fail(400, "Un evento solo puede publicarse si está en borrador");
+    }
+    if(status === 'finished' && event.status !== 'published') {
+        throw fail(400, "Un evento solo puede marcarse como finalizado si está publicado");
+    }
+    if(status === 'cancelled' && event.status === 'finished') {
+        throw fail(400, "Un evento finalizado no puede ser cancelado");
+    }
+    if(status === 'draft' && event.status !== 'draft') {
+        throw fail(400, "Un evento solo puede volver a borrador si no fue publicado o finalizado");
+    }
+    return await editEvent(id, { status });
+};
