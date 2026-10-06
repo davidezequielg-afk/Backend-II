@@ -1,5 +1,5 @@
 import Event from "../models/Event.js";
-import { createEvent, updateEvent, getEvent } from "../services/events.service.js";
+import { createEvent, updateEvent, getEvent, updateEventStatus } from "../services/events.service.js";
 
 export const eventsController = async (req, res, next) => {
   try {
@@ -33,6 +33,15 @@ export const getEventController = async (req, res, next) => {
   try {
     const event = await getEvent(req.params.id);
     res.status(200).json({ status: 'success', message: 'Se encontró el evento buscado', payload: event });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateEventStatusController = async (req, res, next) => {
+  try {
+    const updatedEvent = await updateEventStatus(req.params.id, req.body.status, req.user);
+    res.status(200).json({ status: 'success', message: 'El estado del evento ha sido actualizado  ', payload: updatedEvent });
   } catch (error) {
     next(error);
   }
