@@ -13,3 +13,7 @@ export const findEventById = async (id) => {
 export const updateEventById = async (id, data) => {
     return await Event.findByIdAndUpdate(id, data, { new: true, runValidators: true });
 };
+
+export const findEvents = async (filter, sort, skip, limit) => {
+    return await Event.find(filter).sort(sort).skip(skip).limit(limit);
+};
