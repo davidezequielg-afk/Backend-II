@@ -1,10 +1,12 @@
 import Event from "../models/Event.js";
+import { isValidObjectId } from "mongoose";
 
 export const createEvent = async (eventData) => {
     return await Event.create(eventData);
 };
 
 export const findEventById = async (id) => {
+    if (!isValidObjectId(id)) return null;
     return await Event.findById(id);
 };
 
