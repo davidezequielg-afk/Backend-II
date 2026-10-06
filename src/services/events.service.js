@@ -40,3 +40,10 @@ export const updateEvent = async (id, body, user) => {
     validateEventData(data, { checkPastDate: true });
     return await editEvent(id, data);
 };
+
+export const getEvent = async (id) => {
+    const event = await getEventById(id);
+    if (!event) 
+        throw fail(404, "No se encuentra el evento");
+    return event;
+};
