@@ -16,6 +16,6 @@ export const updateEventById = async (id, data) => {
 
 export const findEvents = async (filter, sort, skip, limit) => {
     const events = await Event.find(filter).sort(sort).skip(skip).limit(limit);
-    const count = await Event.countDocuments(filter);
-    return { events, count };
+    const total = await Event.countDocuments(filter);
+    return { events, total };
 };
