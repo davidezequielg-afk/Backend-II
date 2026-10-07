@@ -1,10 +1,9 @@
-import Event from "../models/Event.js";
-import { createEvent, updateEvent, getEvent, updateEventStatus } from "../services/events.service.js";
+import { createEvent, updateEvent, getEvent, updateEventStatus, getEvents } from "../services/events.service.js";
 
 export const eventsController = async (req, res, next) => {
   try {
-    const events = await Event.find();
-    res.status(200).json({ status: 'success', payload: events });
+    const events = await getEvents(req.query);
+    res.status(200).json({ status: 'success', payload: { page: events.page, limit: events.limit, total: events.total, totalPages: events.totalPages, data: events.data } });
   } catch (error) {
     next(error);
   }
