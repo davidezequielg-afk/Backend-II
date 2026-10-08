@@ -55,6 +55,16 @@ Aca vamos a tener contenido toda la logica que tendra el negocio.
 - utils: 
 Aca se encuentran las fuciones que reutilizamos en todo el codigo. Cuidado con cambiarlas ya que podemos romper el sistema de gestion.
 
+## Reglas de negocio.
+En la siguiente lista se redactaran las reglas que tiene el negocio con respecto a los eventos que se vayan creando:
+- No se puede crear un evento con fecha pasada.
+- La capacidad tiene que ser un numero entero, y siempre mayor a 0.
+- El precio tiene que ser mayor o igual a 0.
+- Un organizer no modifica eventos ajenos, pero el admin sí.
+- Un evento cancelado no se puede modificar, ni cambiar de estado.
+- Cancelar es cambiar el status a cancelled, nunca se borra un evento.
+- Transiciones permitidas de estado: draft a published, published a finished, y desde draft o published a cancelled.
+
 ## Roles y autorizaciones.
 Nos encontraremos con 3 roles, cada uno con sus permisos.
 - 'User': usuario basico, no tiene ningun permiso de modificación en ningun aspecto, exepto de su email y contraseña.
@@ -63,13 +73,16 @@ Nos encontraremos con 3 roles, cada uno con sus permisos.
 
 ## Endpoints disponibles.
 
-- GET /api/events . Genera una lista de los eventos disponibles.
-
 - GET /api/health . Genera una respuesta de si el servidor se encuentra en funcionamiento.
 
 - GET /api/sessions/current . Genera una lista de los datos de la cuenta logeada, solo puede ser vista por un admin.
 
 - GET /api/users . Permite ver los usuarios que se registraron. Solo permitido para admin.
+
+- GET /api/events . Genera una lista de los eventos disponibles. Si son muchos los eventos se van separando en paginas, ademas se pueden
+establecer maneras de ordenarlos (segun fecha, u orden alfabetico), o por filtros.(acceso publico).
+
+- GET /api/events/:id . Nos permite tener la visualizacion de un evento en particular.(acceso publico).
 
 - POST /api/sessions/register . Agrega con este endpoint a los usuarios nuevos.
 
@@ -81,14 +94,38 @@ Nos encontraremos con 3 roles, cada uno con sus permisos.
 
 - PUT /api/events/:id . Este permite la actualización de algun evento. Solo admitido para admin, y organizer (solo puede sus propios eventos).
 
+- PATCH /api/events/:id/status . Este nos permite cambiar los estados de cada evento. Solo admitido para admin, y organizer (solo puede sus propios eventos).
 
-### Respuestas disponibles
+### Filtros disponibles.
+El la seccion de "Endpoints disponibles" tenemos al que se llama: "GET /api/events" al cual se le pueden agregar parametros para su correcto y mejor uso ( antes de colocar un filtro siempre se debe agregar el signo " ? ", de otro modo no se podra filtrar dicho contenido).Esto son:
+
+- status . Este se encarga de filtar dependiendo del estado en el que se encuentre ese evento. Los estados disponibles para su filtrado son: draft, published, finished, cancelled. Un ejemplo puede ser:
+    ?status=draft
+
+- category . Este se encarga de filtar por categoria ( esta opcion queda a cargo de admin u organizer que son quienes crean los eventos). Un ejemplo de este es:
+    ?category=festival
+
+- location . Este se encarga de filtrar por lugar en donde se celebrara el evento.
+    ?location=Buenos Aires
+
+- dateFrom , dateTo . Este se encarga filtrar por rango de fecha.
+    ?dateFrom=2026-11-01 
+    ?dateTo=2026-11-25
+
+- page , limit . Este se encarga de crear la paginacion de los eventos (Por defecto viene page=1, limit=10)
+    ?page=2&limit=5
+
+- sort . Y este se encaga de ordenar los eventos por campo solicitado.
+    ?sort=date
+
+### Respuestas disponibles.
 
 - 200: usuario logeado,
 - 201: usuario registrado exitosamente,
 - 400: campos incompletos o formato inválido,
 - 401: no existe una cookie de sesión, el token es inválido o venció,
 - 403: el usuario está autenticado, pero su rol no cuenta con el permisos para realizar accion,
+- 404: objeto o consulta inexistente,
 - 409: email duplicado (email ya registrado),
 - 500: error interno del servidor,
 
@@ -141,6 +178,9 @@ Esn este caso no se esperan ni se necesitan campos para completar, ya que se hac
 - `description`: Descripcion del evento a crear.
 - `date`: Fecha y horario del evento.
 - `location`: Lugar a llevarse a cabo el evento.
+- `category` : Categoria que tendrá el evento (Queda a cargo de la persona que cree el evento, y las normas del negocio).
+- `capacity` : Capacidad que tendrá el evento.
+- `price` :  Precio que tendra cada entrada al evento.
 
 ## Evidencias de Uso.
 ### A continuacios se veran, en formato de imagenes, las evidencias de como se verian el uso de las RUTAS mediante el uso del programa de POSTMAN.
@@ -227,27 +267,77 @@ En esta prueba se puede ver cuales son los clientes creados, solo puede verlo un
 ![GET /api/users (vista solo admin)](images/GET%20-api-users(admin).png)
 
 - GET /api/events .
-Aquí se veran los eventos que fueron creados.
+Aquí se veran los eventos que fueron creados. Este endpoint es de acceso publico, no hace falta estar logeado.
 - Repuesta esperada:
 
 ```json
 {
   "status": "success",
-  "payload": [
-    {
+  "payload": {
+    "page": 1,
+    "limit": 10,
+    "total": 1,
+    "totalPages": 1,
+    "data": [{
       "_id": "id-del-evento",
       "title": "titulo-del-evento",
       "description": "descripcion-del-evento",
-      "date": "dia-y-horario-del-evento-(2000-01-13T22:00:00.000Z)",
+      "date": "fecha-del-evento(2026-11-21T21:00:00.000Z)",
       "location": "lugar-del-evento",
-      "organizer": "id-del-creador-del-evento",
+      "category": "categoria-del-evento",
+      "capacity": 100,
+      "price": 20000,
+      "status": "estado-del-evento",
+      "organizer": "creador-del-evento",
       "__v": 0
-    }
-  ]
+  }]
+  }
 }
 ```
 
 ![GET /api/events](images/GET%20-api-events.png)
+
+- GET /api/events/:id .
+Aquí se vera el evento por id. Este endpoint es de acceso publico, no hace falta estar logeado.
+- Repuesta esperada:
+
+```json
+{
+  "status": "success",
+  "payload": {
+      "_id": "id-del-evento",
+      "title": "titulo-del-evento",
+      "description": "descripcion-del-evento",
+      "date": "fecha-del-evento(2026-11-21T21:00:00.000Z)",
+      "location": "lugar-del-evento",
+      "category": "categoria-del-evento",
+      "capacity": 100"(capacidad-del-evento)",
+      "price": 20000"(precio-del-evento)",
+      "status": "estado-del-evento",
+      "organizer": "creador-del-evento",
+      "__v": 0
+  }
+}
+```
+![GET /api/events/:id](images/GET%20-api-events-id.png)
+
+- GET /api/events con parametros .
+Ejemplo: "GET /api/events?status=published&category=Festival&page=2&limit=5"
+Aqui se vera la cantidad de eventos cuando le ponemos filtros a la busqueda 
+- Repuesta esperada:
+```json
+{
+    "status": "success",
+    "payload": {
+        "page": 2,
+        "limit": 5,
+        "total": 0,
+        "totalPages": 0,
+        "data": []
+    }
+}
+```
+![GET /api/events con parametros](images/GET%20-api-events-con-filtros.png)
 
 #### Endpoints POST
 
@@ -336,13 +426,17 @@ En esta prueba veremos como subir un evento, (solo admitido para organizers, y a
 {
   "status": "success",
   "payload": {
-    "title": "nombre-del-evento",
-    "description": "decripcion-del-evento",
-    "date": "dia-horario-del-evento (2026-11-21T00:00:00.000Z)",
-    "location": "lugar-del-evento",
-    "organizer": "id-del-creador",
-    "_id": "id-del-evento",
-    "__v": 0
+      "_id": "id-del-evento",
+      "title": "titulo-del-evento",
+      "description": "descripcion-del-evento",
+      "date": "fecha-del-evento(2026-11-21T21:00:00.000Z)",
+      "location": "lugar-del-evento",
+      "category": "categoria-del-evento",
+      "capacity": 100"(capacidad-del-evento)",
+      "price": 20000"(precio-del-evento)",
+      "status": "estado-del-evento",
+      "organizer": "creador-del-evento",
+      "__v": 0
   }
 }
 ```
@@ -358,19 +452,48 @@ En este endpoint veremos como actualizar un evento, solo para admins y organizer
 {
   "status": "success",
   "message": "Evento actualizado"
-  "payload": {
-    "_id": "id-del-evento",
-    "title": "titulo-del-evento",
-    "description": "descripcion-del-evento",
-    "date": "dia-y-horario-del-evento(2026-11-22T00:00:00.000Z)",
-    "location": "lugar-del-evento",
-    "organizer": "id-del-cliente-que-actualizó",
-    "__v": 0
-  }
+  "payload": [{
+      "_id": "id-del-evento",
+      "title": "titulo-del-evento",
+      "description": "descripcion-del-evento",
+      "date": "fecha-del-evento(2026-11-21T21:00:00.000Z)",
+      "location": "lugar-del-evento",
+      "category": "categoria-del-evento",
+      "capacity": 100"(capacidad-del-evento)",
+      "price": 20000"(precio-del-evento)",
+      "status": "estado-del-evento",
+      "organizer": "creador-del-evento"
+  }]
 }
 ```
 
 ![PUT /api/events](images/PUT%20-api-events.png)
+
+#### Endpoints PATCH.
+
+- PATCH /api/events/:id/status En este endpoint veremos como actualizar el estado (status), de cada evento, solo para admins y organizers, (los admins, pueden actualizar cualquier evento. Un organizer solo los creados por el mismo).
+- Respuesta esperada:
+```json
+{
+    "status": "success",
+    "message": "El estado del evento ha sido actualizado  ",
+    "payload": {
+        "_id": "6ac70aaba10cb2877e6e14b7",
+        "title": "MotoCrash",
+        "description": "Festival de Motos",
+        "date": "2026-11-21T21:00:00.000Z",
+        "location": "Olimpo",
+        "category": "Motos",
+        "capacity": 227,
+        "price": 20000,
+        "status": "published",
+        "organizer": "6ac707e1e01f1191576e54d3",
+        "__v": 0
+    }
+}
+```
+
+![PATCH /api/events/:id/status](images/PATCH%20-api-events-id-status.png)
 
 ## Estrategias de autenticación
 ### Para uso de autenticadores externos
