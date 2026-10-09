@@ -45,11 +45,11 @@ export const createTicket = async (eventId, user, quantity) => {
 export const getEventTickets = async (eventId, user) => {
 
     const tickets = await getTicketsByEvent(eventId);
+    const event = await getEventById(eventId);
     if (user.role !== "admin" && event.organizer.toString() !== user.id) {
         throw fail(403, "No tienes permiso para ver los boletos de este evento");
     };
     
-    const event = await getEventById(eventId);
     if (!event) {
         throw fail(404, "El evento no fue encontrado");
     };
