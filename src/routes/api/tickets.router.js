@@ -3,9 +3,9 @@ import { cancelTicketController, getMyTicketsController } from '../../controller
 import { authorize } from '../../middlewares/authorize.middleware.js';
 import { authenticate } from '../../middlewares/auth.middleware.js';
 
-const router = Router();
+const routerTicket = Router();
 
-router.get('/my-tickets', authenticate, getMyTicketsController);
-router.patch('/:ticketId/cancel', authenticate, authorize, cancelTicketController);
+routerTicket.get('/my-tickets', authenticate, getMyTicketsController);
+routerTicket.patch('/:ticketId/cancel', authenticate, authorize('admin', 'organizer'), cancelTicketController);
 
-export default router;
+export default routerTicket;
