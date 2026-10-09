@@ -30,7 +30,7 @@ export const createTicket = async (eventId, user, quantity) => {
     
     const cantTickets = event.capacity - await getOccupiedTicketsCount(eventId);
     if (Number(quantityInt) > cantTickets) {
-        throw fail(400, `No hay suficientes boletos disponibles para este evento. Solo quedan ${cantTickets} disponibles.`);
+        throw fail(400, `No hay suficientes boletos disponibles para este evento.`);
     };
     
     const userEmail = user.email;
