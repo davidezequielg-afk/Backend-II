@@ -5,6 +5,7 @@ import HealthStatus from './routes/api/health.router.js';
 import eventsRoutes from './routes/api/events.router.js';
 import sessionsRoutes from './routes/api/sessions.router.js';
 import routerUser from './routes/api/users.router.js';
+import routerTicket from './routes/api/tickets.router.js';
 import cookieParser from 'cookie-parser';
 
 
@@ -21,6 +22,7 @@ app.use('/api/health', HealthStatus);
 app.use('/api/events', eventsRoutes);
 app.use('/api/sessions', sessionsRoutes);
 app.use('/api/users', routerUser);
+app.use('/api/tickets', routerTicket);
 
 app.use(errorMiddleware);
 
