@@ -8,6 +8,7 @@
 - MONGODB.
 - MONGOOSE.
 - DOTENV.
+- NODEMAILER
 
 ## Instalación.
 
@@ -25,6 +26,11 @@ Dentro del archivo .env.example encontraremos todas las variables que se usan en
 - NODE_ENV .
 - JWT_SECRET .
 - JWT_EXPIRES_IN .
+- MAIL_HOST : servidor SMTP.
+- MAIL_PORT : puerto del SMTP.
+- MAIL_USER : usuario del SMTP.
+- MAIL_PASS : contraseña del SMTP.
+- MAIL_FROM : dirección que figura como remitente.
 
 
 ## Ejecución.
@@ -65,6 +71,39 @@ En la siguiente lista se redactaran las reglas que tiene el negocio con respecto
 - Cancelar es cambiar el status a cancelled, nunca se borra un evento.
 - Transiciones permitidas de estado: draft a published, published a finished, y desde draft o published a cancelled.
 
+## Tickets e inscripciones.
+Para explicar como se obtienen los tickets y saber que contienen, se divide esta parte en 3 secciones que explicaran lo más posible:
+
+### Estado de un ticket.
+Aca encontraremos tres estados por los que un ticket puede pasar:
+- confirmed : inscripción válida.
+- pending : la inscripcion se esta procesando.
+- cancelled : ticket cancelado.
+
+### Flujo de inscripcion.
+En la siguiente lista se detalla como deben estar los parametros para la inscripcion a eventos:
+- "quantity" : es decir la cantidad de entradas a obtener debe ser un numero entero positivo, mayor a 0.
+- El evento debe existir.
+- El usuario no debe tener un ticket obtenido anteriormente, a menos que haya sido cancelado.
+- En el evento deben haber campos suficientes.
+- En el ticket no solo se detalla el evento y la cantiidad de entradas obtenidas, sino que tambien un codigo de reserva que luego es enviado al mail que se deja en el momento de registrar a ese mismo usuario.
+
+### Reglas de cupos.
+- La cantidad de ticket disponibles es igual a la capacidad del evento menos la cantidad de tickets que se encuentren confirmados o pendientes.
+- Al cancelar un ticket este pasa a un estado de "cancelled", por lo que registra "cancelledAt", de esta manera no se puede borrar dicho documento.
+- Cancelar un ticket provoca que este cambie de estado de tal manera que no se puede volver a conseguir. La solucion a esto es simplemente comprar otro ticket.
+- Al cancelar, el cupo del evento que tenia dicho ticket queda habilitado para su compra.
+
+### Campos necesarios para conseguir tickets
+Primero que nada para conseguir un ticket se debe estar logeado al sistema. (ver `Login de Usuarios`).
+- `quantity : `: Cantidad de entradas que se deseen conseguir.
+
+#### Ejemplo de solicitud.
+
+```json
+{ "quantity": 1 }
+```
+
 ## Roles y autorizaciones.
 Nos encontraremos con 3 roles, cada uno con sus permisos.
 - 'User': usuario basico, no tiene ningun permiso de modificación en ningun aspecto, exepto de su email y contraseña.
@@ -84,6 +123,10 @@ establecer maneras de ordenarlos (segun fecha, u orden alfabetico), o por filtro
 
 - GET /api/events/:id . Nos permite tener la visualizacion de un evento en particular.(acceso publico).
 
+- GET /api/events/:id/tickets . Permite la visualizacion de los tickets vendidos para un evento. Solo admitido para admin, y organizer (solo puede sus propios eventos).
+
+- GET /api/tickets/my-tickets . Permite la visualizacion de las entradas/tickets adquiridos por un usuario. Se precisa estar logeado para tener el acceso, no tiene restriccion de autorizacion.
+
 - POST /api/sessions/register . Agrega con este endpoint a los usuarios nuevos.
 
 - POST /api/sessions/login . Este endpoint es el que te permite logear a tu cuenta de la plataforma.
@@ -92,9 +135,13 @@ establecer maneras de ordenarlos (segun fecha, u orden alfabetico), o por filtro
 
 - POST /api/events . Este endpoint agrega los eventos nuevos, siempre y cuando haya autorizacion de admin u organizador.
 
+- POST /api/events/:id/tickets . Permite la inscripcion (o venta de tickets), siempre y cuanto el usuario este logeado. En su body se deben poner las cantidades de entradas a conseguir. 
+
 - PUT /api/events/:id . Este permite la actualización de algun evento. Solo admitido para admin, y organizer (solo puede sus propios eventos).
 
 - PATCH /api/events/:id/status . Este nos permite cambiar los estados de cada evento. Solo admitido para admin, y organizer (solo puede sus propios eventos).
+
+- PATCH /api/tickets/:tid/cancel . Permite la cancelacion de tickets de cualquier usuario. Solo permitido para admins y el dueño del ticket.
 
 ### Filtros disponibles.
 El la seccion de "Endpoints disponibles" tenemos al que se llama: "GET /api/events" al cual se le pueden agregar parametros para su correcto y mejor uso ( antes de colocar un filtro siempre se debe agregar el signo " ? ", de otro modo no se podra filtrar dicho contenido).Esto son:
@@ -122,11 +169,11 @@ El la seccion de "Endpoints disponibles" tenemos al que se llama: "GET /api/even
 
 - 200: usuario logeado,
 - 201: usuario registrado exitosamente,
-- 400: campos incompletos o formato inválido,
+- 400: campos incompletos o formato inválido, para el caso de los Tickets se debe a cantidad inválida, evento no disponible o sin cupo suficiente.
 - 401: no existe una cookie de sesión, el token es inválido o venció,
 - 403: el usuario está autenticado, pero su rol no cuenta con el permisos para realizar accion,
 - 404: objeto o consulta inexistente,
-- 409: email duplicado (email ya registrado),
+- 409: email o ticket duplicado (email ya registrado, ticket ya registrado para este usuario),
 - 500: error interno del servidor,
 
 ## Registro de Usuarios.
@@ -322,8 +369,9 @@ Aquí se vera el evento por id. Este endpoint es de acceso publico, no hace falt
 ![GET /api/events/:id](images/GET%20-api-events-id.png)
 
 - GET /api/events con parametros .
-Ejemplo: "GET /api/events?status=published&category=Festival&page=2&limit=5"
 Aqui se vera la cantidad de eventos cuando le ponemos filtros a la busqueda 
+
+Ejemplo: "GET /api/events?status=published&category=Festival&page=2&limit=5"
 - Repuesta esperada:
 ```json
 {
@@ -338,6 +386,54 @@ Aqui se vera la cantidad de eventos cuando le ponemos filtros a la busqueda
 }
 ```
 ![GET /api/events con parametros](images/GET%20-api-events-con-filtros.png)
+
+- GET /api/events/:id/tickets
+Aqui se podra ver los tickets vendidos de un evento en particular, el cual solo puede verlo un administrador o el organizer del evento.
+- Respuesta esperada:
+```json
+{
+        "_id": "id-del-ticket",
+        "user": {
+            "_id": "id-del-usuario",
+            "first_name": "nombre-del-usuario",
+            "last_name": "apellido-del-usuario",
+            "email": "mail-del-usuario"
+        },
+        "event": "id-del-evento",
+        "status": "estado-del-ticket",
+        "quantity": 1,
+        "reservationCode": "codigo-de-reserva",
+        "cancelledAt": null,
+        "createdAt": "hora-de-creacion-del-ticket",
+        "updatedAt": "hora-de-actualizacion-del-ticket",
+        "__v": 0
+    }
+```
+![GET /api/events/:id/tickets](images/GET%20-api-events-id-tickets.png)
+
+- GET /api/tickets/my-tickets
+Aqui se podran ver los tickets comprados por el propio usuario, con titulo, fecha y lugar del evento
+- Respuesta esperada:
+```json
+{
+        "_id": "id-del-ticket",
+        "user": "id-del-usuario",
+        "event": {
+            "_id": "id-del-evento",
+            "title": "titulo-del-evento",
+            "date": "fecha-del-evento",
+            "location": "lugar-del-evento"
+        },
+        "status": "estado-del-ticket",
+        "quantity": 1,
+        "reservationCode": "codigo-de-reserva",
+        "cancelledAt": null,
+        "createdAt": "hora-de-creacion-del-ticket",
+        "updatedAt": "hora-de-actualizacion-del-ticket",
+        "__v": 0
+    }
+```
+![GET /api/tickets/my-tickets](images/GET%20-api-tickets--my-tickets.png)
 
 #### Endpoints POST
 
@@ -443,6 +539,37 @@ En esta prueba veremos como subir un evento, (solo admitido para organizers, y a
 
 ![POST /api/events](images/POST%20-api-events.png)
 
+- POST /api/events/:id/tickets
+En este se muestra como se lleva a cabo la inscripcion a un evento. Para este proceso el usuario debe estar logeado.
+- Respuesta esperada:
+```json
+{
+    "user": "id-del-usuario",
+    "event": "id-del-evento",
+    "status": "estado-del-ticket",
+    "quantity": 10,
+    "reservationCode": "codigo-de-reserva",
+    "cancelledAt": null,
+    "_id": "id-del-ticket",
+    "createdAt": "fecha-de-creacion-del-ticket",
+    "updatedAt": "fecha-de-actualizacion-del-ticket",
+    "__v": 0
+}
+```
+
+![POST /api/events/:id/tickets](images/POST%20-api-events-id-tickets.png)
+
+- POST /api/events/:id/tickets
+Que es lo que pasa cuando se intenta comprar nuevamente un ticket desde el mismo usuario. Para este proceso el usuario debe estar logeado.
+- Respuesta esperada:
+```json
+{
+    "message": "Ya existe un boleto para este usuario en el mismo evento"
+}
+```
+
+![POST /api/events/:id/tickets](images/POST%20-api-events-id-tickets%20(usuario%20con%20compra%20antes%20resgistrada).png)
+
 #### Endpoints PUT.
 
 - PUT /api/events .
@@ -471,7 +598,8 @@ En este endpoint veremos como actualizar un evento, solo para admins y organizer
 
 #### Endpoints PATCH.
 
-- PATCH /api/events/:id/status En este endpoint veremos como actualizar el estado (status), de cada evento, solo para admins y organizers, (los admins, pueden actualizar cualquier evento. Un organizer solo los creados por el mismo).
+- PATCH /api/events/:id/status 
+En este endpoint veremos como actualizar el estado (status), de cada evento, solo para admins y organizers, (los admins, pueden actualizar cualquier evento. Un organizer solo los creados por el mismo).
 - Respuesta esperada:
 ```json
 {
@@ -494,6 +622,26 @@ En este endpoint veremos como actualizar un evento, solo para admins y organizer
 ```
 
 ![PATCH /api/events/:id/status](images/PATCH%20-api-events-id-status.png)
+
+- PATCH /api/tickets/:id/cancel
+En este endpoint veremos la manera de cancelar un ticket. No lleva ningun Body. Solo puede hacerlo un usuario ADMIN y el dueño del ticket.
+- Respuesta esperada:
+```json
+{
+    "_id": "id-del-ticket",
+    "user": "id-del-usuario-",
+    "event": "id-del-evento",
+    "status": "cancelled",
+    "quantity": 10,
+    "reservationCode": "codigo-de-reserva",
+    "cancelledAt": "fecha-de-cancelacion-del-ticket",
+    "createdAt": "fecha-de-creacion-del-ticket",
+    "updatedAt": "fecha-de-actualizacion-del-ticket",
+    "__v": 0
+}
+```
+
+![PATCH /api/tickets/:id/cancel](images/PATCH%20-api-tickets--id-cancel.png)
 
 ## Estrategias de autenticación
 ### Para uso de autenticadores externos
