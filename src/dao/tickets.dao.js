@@ -1,55 +1,38 @@
 import TicketModel from '../models/Ticket.js';
-import { isValidObjectId, Types } from "mongoose";
+import { isValidObjectId } from "mongoose";
 
-export const createTicket = async (ticketData) => {
+class TicketDAO {
+    async create(ticketData) {
     if (!isValidObjectId(ticketData.user) || !isValidObjectId(ticketData.event)) {
         return null; }
     const ticket = new TicketModel(ticketData);
     return await ticket.save();
 };
-
-export const findTicketById = async (ticketId) => {
+    async findById(ticketId) {
     if (!isValidObjectId(ticketId)) {
         return null;
     }
     return await TicketModel.findById(ticketId);
 };
-
-export const findTicketsByUser = async (userId) => {
-    if (!isValidObjectId(userId)) {
-        return [];
-    }
-    return await TicketModel.find({ user: userId }).populate('event', 'title date location');
+    async findOne(filter) {
+    return await TicketModel.findOne(filter);
 };
-
-export const findTicketsByEvent = async (eventId) => {
-    if (!isValidObjectId(eventId)) {
-        return [];
+    async find(filter, populate) {
+    const query = TicketModel.find(filter);
+    if (populate) {
+        query.populate(populate);
     }
-    return await TicketModel.find({ event: eventId }).populate('user', 'first_name last_name email');
+    return await query;
 };
-
-export const findActiveTicket = async (userId, eventId) => {
-    if (!isValidObjectId(userId) || !isValidObjectId(eventId)) {
-        return null;
-    }
-    return await TicketModel.findOne({ user: userId, event: eventId, status: { $ne: 'cancelled' } });
-};
-
-export const countOccupiedTickets = async (eventId) => {
-    if (!isValidObjectId(eventId)) {
-        return 0;
-    }
-    const result = await TicketModel.aggregate([
-        { $match: { event: new Types.ObjectId(eventId), status: { $ne: 'cancelled' } } },
-        { $group: { _id: null, occupiedTickets: { $sum: `$quantity` } } }
-    ]);
-    return result.length > 0 ? result[0].occupiedTickets : 0;
-};
-
-export const updateTicketById = async (ticketId, data) => {
+    async update(ticketId, data) {
     if (!isValidObjectId(ticketId)) {
         return null;
     }
     return await TicketModel.findByIdAndUpdate(ticketId, data, { new: true });
 };
+    async aggregate(pipeline) {
+    return await TicketModel.aggregate(pipeline);
+};
+}
+
+export default new TicketDAO()
