@@ -86,7 +86,8 @@ En la siguiente lista se detalla como deben estar los parametros para la inscrip
 - El evento debe existir.
 - El usuario no debe tener un ticket obtenido anteriormente, a menos que haya sido cancelado.
 - En el evento deben haber campos suficientes.
-- En el ticket no solo se detalla el evento y la cantiidad de entradas obtenidas, sino que tambien un codigo de reserva que luego es enviado al mail que se deja en el momento de registrar a ese mismo usuario.
+- En el ticket no solo se detalla el evento y la cantidad de entradas obtenidas, sino que tambien un codigo de reserva que luego es enviado al mail que se deja en el momento de registrar a ese mismo usuario.
+- El evento no debe estar en una fecha anterior a la que se desee generar el ticket, ya que ese evento ya se encuentra vencido
 
 ### Reglas de cupos.
 - La cantidad de ticket disponibles es igual a la capacidad del evento menos la cantidad de tickets que se encuentren confirmados o pendientes.
