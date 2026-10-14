@@ -22,6 +22,9 @@ export const createTicket = async (eventId, user, quantity) => {
     if (event.status !== "published") {
         throw fail(400, "No se pueden crear boletos para un evento que no está publicado");
     };
+    if (event.date && new Date(event.date) < new Date()) {
+        throw fail(400, "No se pueden crear boletos para un evento que ya ha ocurrido");
+    };
     
     const ticketDuplicate = await getActiveTicket(user.id, eventId);
     if (ticketDuplicate) {
