@@ -7,3 +7,11 @@ export class UserDTO {
         this.role = user.role;
     }
 }
+
+export class CurrentUserDTO {
+    constructor(user) {
+        this.id = user._id;
+        this.email = user.email;
+        this.role = user.role;
+    }
+}
