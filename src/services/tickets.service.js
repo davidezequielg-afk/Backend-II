@@ -1,6 +1,6 @@
 import ticketRepository from "../repositories/tickets.repository.js";
 import { sendTicketConfirmation } from "../utils/mailer.js";
-import { getEventById } from "../repositories/events.repository.js";
+import eventRepository from "../repositories/events.repository.js";
 import { randomUUID } from "crypto";
 
 const fail = (statusCode, message) => {
@@ -15,7 +15,7 @@ export const createTicket = async (eventId, user, quantity) => {
         throw fail(400, "La cantidad de boletos debe ser mayor a cero");
     };
 
-    const event = await getEventById(eventId);
+    const event = await eventRepository.findById(eventId);
     if (!event) {throw fail(404, "El evento no fue encontrado");};
     if (event.status === "cancelled" || event.status === "finished") {
         throw fail(400, "No se pueden crear boletos para un evento cancelado o finalizado");};
@@ -36,7 +36,7 @@ export const createTicket = async (eventId, user, quantity) => {
         throw fail(400, `No hay suficientes boletos disponibles para este evento.`);
     };
     const userEmail = user.email;
-    const ticket = await ticketRepository.saveTicket({ user: user.id, event: eventId, quantity: quantityInt, status: "confirmed", reservationCode: randomUUID() });
+    const ticket = await ticketRepository.save({ user: user.id, event: eventId, quantity: quantityInt, status: "confirmed", reservationCode: randomUUID() });
     await sendTicketConfirmation(userEmail, "Confirmación de compra de boletos", 
        `Has comprado ${quantityInt} boletos para el evento "${event.title}". 
         Tu código de reserva es ${ticket.reservationCode}.`);
@@ -45,7 +45,7 @@ export const createTicket = async (eventId, user, quantity) => {
 };
 
 export const getEventTickets = async (eventId, user) => {
-    const event = await getEventById(eventId);
+    const event = await eventRepository.findById(eventId);
     if (!event) {
         throw fail(404, "El evento no fue encontrado");
     };
@@ -67,7 +67,7 @@ export const cancelTicket = async (ticketId, user) => {
     if (ticket.status === "cancelled") {
         throw fail(400, "El boleto ya está cancelado");
     };
-    const updatedTicket = await ticketRepository.cancelTicket(ticketId);
+    const updatedTicket = await ticketRepository.update(ticketId, { status: "cancelled" });
 
     return updatedTicket;
 };
