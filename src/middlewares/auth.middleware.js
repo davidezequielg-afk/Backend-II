@@ -2,21 +2,19 @@ import { verifyToken } from '../utils/jwt.js';
 
 export const authenticate = (req, res, next) => {
     const token = req.cookies.currentUser;
-
+    const unauthenticatedError = () => {
+        const err = new Error('No autenticado');
+        err.statusCode = 401;
+        return err;
+    };
     if (!token) {
-        return res.status(401).json({ 
-            status: 'error', 
-            message: 'No autenticado' 
-        });
+        return next(unauthenticatedError());
     }
     try {
         const user = verifyToken(token);
         req.user = user;
         next();
     } catch (error) {
-        return res.status(401).json({ 
-            status: 'error', 
-            message: 'No autenticado' 
-        });
+        return next(unauthenticatedError());
     }
 };
