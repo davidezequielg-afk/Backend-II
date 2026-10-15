@@ -1,6 +1,7 @@
 import { NODE_ENV } from '../config/config.jwt.js';
 import { JWT_EXPIRES_IN_MS } from '../config/config.jwt.js';
 import { generateToken } from '../utils/jwt.js';
+import { CurrentUserDTO } from '../dto/user.dto.js';
 
 export const registerController = async (req, res) => {
   res.status(201).json({ 
@@ -32,7 +33,7 @@ export const logoutController = (req, res) => {
 
 export const currentUserController = (req, res) => {
   if (req.user) {
-    res.status(200).json({ user: { id: req.user.id, email: req.user.email, role: req.user.role } });
+    res.status(200).json({ user: new CurrentUserDTO(req.user) });
   } else {
     res.status(401).json({ message: 'Usuario no autenticado' });
   }
