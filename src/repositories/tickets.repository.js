@@ -1,29 +1,37 @@
-import { createTicket, findTicketById, findTicketsByUser, findTicketsByEvent, findActiveTicket, countOccupiedTickets, updateTicketById } from '../dao/tickets.dao.js';
+import TicketDAO from '../dao/tickets.dao.js';
+import { Types } from "mongoose";
 
-export const saveTicket = async (ticketData) => {
-    return await createTicket(ticketData);
-};
+class TicketRepository {
+    async create(ticketData) {
+        return await TicketDAO.create(ticketData);
+    }
+    async findActiveByUserAndEvent(userId, eventId) {
+        const ticket = await TicketDAO.findOne({ user: userId, event: eventId, status: { $ne: 'cancelled' } });
+        return ticket;
+    }
+    async findByUser(userId) {
+        const tickets = await TicketDAO.find({ user: userId }, { path: 'event', select: 'title date location' });
+        return tickets;
+    }
+    async findById(ticketId) {
+        return await TicketDAO.findById(ticketId);
+    }
+    async findByEvent(eventId) {
+        const tickets = await TicketDAO.find({ event: eventId }, { path: 'user', select: 'first_name last_name email' });
+        return tickets;
+    }
+    async countActiveTickets(eventId) {
+        const pipeline = [
+            { $match: { event: new Types.ObjectId(eventId), status: { $ne: 'cancelled' } } },
+            { $group: { _id: null, activeTickets: { $sum: '$quantity' } } }
+        ];
+        const result = await TicketDAO.aggregate(pipeline);
+        return result.length > 0 ? result[0].activeTickets : 0;
+    }
+    async cancelTicket(ticketId) {
+        const ticketCancelled = await TicketDAO.update(ticketId, { status: 'cancelled', cancelledAt: new Date() });
+        return ticketCancelled;
+    }
+}
 
-export const getTicketById = async (ticketId) => {
-    return await findTicketById(ticketId);
-};
-
-export const getTicketsByUser = async (userId) => {
-    return await findTicketsByUser(userId);
-};
-
-export const getTicketsByEvent = async (eventId) => {
-    return await findTicketsByEvent(eventId);
-};
-
-export const getActiveTicket = async (userId, eventId) => {
-    return await findActiveTicket(userId, eventId);
-};
-
-export const getOccupiedTicketsCount = async (eventId) => {
-    return await countOccupiedTickets(eventId);
-};
-
-export const updateTicket = async (ticketId, data) => {
-    return await updateTicketById(ticketId, data);
-};
+export default new TicketRepository();
