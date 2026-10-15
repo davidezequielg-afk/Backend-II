@@ -1,13 +1,30 @@
 import User from "../models/User.js";
+import { isValidObjectId } from "mongoose";
 
-export const createUser = async (userData) => {
-    return await User.create(userData);
-};
+class UserDAO {
+    async create(userData) {
+        const user = new User(userData);
+        return await user.save();
+    }
+    async findById(userId) {
+        if (!isValidObjectId(userId)) {
+            return null;
+        }
+        return await User.findById(userId);
+    }
+    async findOne(filter) {
+        return await User.findOne(filter);
+    }
+    async find(filter) {
+        const query = User.find(filter);
+        return await query;
+    }
+    async update(id, updateData) {
+        if (!isValidObjectId(id)) {
+            return null;
+        }
+        return await User.findByIdAndUpdate(id, updateData, { new: true });
+    }
+}
 
-export const getUserByEmail = async (email) => {
-    return await User.findOne({ email });
-};
-
-export const getAllUsers = async () => {
-    return await User.find().select("-password");
-};
+export default new UserDAO();
