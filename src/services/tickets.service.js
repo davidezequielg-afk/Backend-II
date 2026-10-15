@@ -1,4 +1,4 @@
-import { saveTicket, getTicketById, getTicketsByUser, getTicketsByEvent, getActiveTicket, getOccupiedTicketsCount, updateTicket } from "../repositories/tickets.repository.js";
+import ticketRepository from "../repositories/tickets.repository.js";
 import { sendTicketConfirmation } from "../utils/mailer.js";
 import { getEventById } from "../repositories/events.repository.js";
 import { randomUUID } from "crypto";
@@ -26,18 +26,17 @@ export const createTicket = async (eventId, user, quantity) => {
         throw fail(400, "No se pueden crear boletos para un evento que ya ha ocurrido");
     };
     
-    const ticketDuplicate = await getActiveTicket(user.id, eventId);
+    const ticketDuplicate = await ticketRepository.findActiveByUserAndEvent(user.id, eventId);
     if (ticketDuplicate) {
         throw fail(409, "Ya existe un boleto para este usuario en el mismo evento");
     };
     
-    const cantTickets = event.capacity - await getOccupiedTicketsCount(eventId);
+    const cantTickets = event.capacity - await ticketRepository.countActiveTickets(eventId);
     if (Number(quantityInt) > cantTickets || cantTickets <= -1) {
         throw fail(400, `No hay suficientes boletos disponibles para este evento.`);
     };
-    
     const userEmail = user.email;
-    const ticket = await saveTicket({ user: user.id, event: eventId, quantity: quantityInt, status: "confirmed", reservationCode: randomUUID() });
+    const ticket = await ticketRepository.saveTicket({ user: user.id, event: eventId, quantity: quantityInt, status: "confirmed", reservationCode: randomUUID() });
     await sendTicketConfirmation(userEmail, "Confirmación de compra de boletos", 
        `Has comprado ${quantityInt} boletos para el evento "${event.title}". 
         Tu código de reserva es ${ticket.reservationCode}.`);
@@ -46,8 +45,6 @@ export const createTicket = async (eventId, user, quantity) => {
 };
 
 export const getEventTickets = async (eventId, user) => {
-
-    const tickets = await getTicketsByEvent(eventId);
     const event = await getEventById(eventId);
     if (!event) {
         throw fail(404, "El evento no fue encontrado");
@@ -55,12 +52,12 @@ export const getEventTickets = async (eventId, user) => {
     if (user.role !== "admin" && event.organizer.toString() !== user.id) {
         throw fail(403, "No tienes permiso para ver los boletos de este evento");
     };
-    
+    const tickets = await ticketRepository.findByEvent(eventId);
     return tickets;
 };
 
 export const cancelTicket = async (ticketId, user) => {
-    const ticket = await getTicketById(ticketId);
+    const ticket = await ticketRepository.findById(ticketId);
     if (!ticket) {
         throw fail(404, "El Ticket o boleto no fue encontrado");
     };
@@ -70,13 +67,12 @@ export const cancelTicket = async (ticketId, user) => {
     if (ticket.status === "cancelled") {
         throw fail(400, "El boleto ya está cancelado");
     };
-    const updatedTicket = await updateTicket(ticketId, { status: "cancelled", 
-        cancelledAt:  new Date()});
+    const updatedTicket = await ticketRepository.cancelTicket(ticketId);
 
     return updatedTicket;
 };
 
 export const getMyTickets = async (userId) => {
-    const tickets = await getTicketsByUser(userId);
+    const tickets = await ticketRepository.findByUser(userId);
     return tickets;
 };
