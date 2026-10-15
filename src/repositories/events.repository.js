@@ -1,6 +1,6 @@
 import EventDAO from "../dao/events.dao.js";
 
-class EventRepository {
+class eventRepository {
     async create(data){
     return await EventDAO.create(data);
     }
@@ -20,4 +20,4 @@ class EventRepository {
     }   
 }
 
-export default new EventRepository();
+export default new eventRepository();
