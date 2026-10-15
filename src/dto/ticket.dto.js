@@ -12,8 +12,8 @@ const toUserDTO = (user) => {
 };
 
 const toEventDTO = (event) => {
-    if (!event) {
-        return null;
+    if (!event.title) {
+        return event;
     }
     return {
         id: event.id,
