@@ -1,6 +1,7 @@
 import passport  from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
 import { registerUser, loginUser } from '../services/users.service.js';
+import { UserDTO } from '../dto/user.dto.js';
 
 
 
@@ -16,13 +17,7 @@ export const registerStrategy = new LocalStrategy(
           } = req.body;
         const createdUser = await registerUser({ email, password, first_name, last_name });
     
-        return done(null, {
-            id: createdUser._id,
-            first_name: createdUser.first_name,
-            last_name: createdUser.last_name,
-            email: createdUser.email,
-            role: createdUser.role,
-        });
+        return done(null, new UserDTO(createdUser));
     }
     catch (error) {
         return done(error);
