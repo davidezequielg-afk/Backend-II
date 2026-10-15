@@ -63,10 +63,7 @@ export const loginUser = async ({ email, password }) => {
     return { id: user._id, email: user.email, role: user.role };
 };
 
-export const getUserById = async (id) => {
-    const user = await userRepository.findAll(id);
-    if (!user) {
-        throw fail(404, "Usuario no encontrado");
-    };
-    return { id: user._id, email: user.email, role: user.role };
+export const getAllUsers = async () => {
+    const users = await userRepository.findAll();
+    return users.map(user => ({ id: user._id, email: user.email, role: user.role }));
 };
