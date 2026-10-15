@@ -1,4 +1,4 @@
-import EventRepository from "../repositories/events.repository.js";
+import eventRepository from "../repositories/events.repository.js";
 
 const STATUS_VALUES = ['draft', 'published', 'cancelled', 'finished'];
 const EDITABLE_FIELDS = ['title', 'description', 'category', 'date', 'location', 'capacity', 'price'];
@@ -28,12 +28,12 @@ const validateEventData = ({ date, capacity, price }, { checkPastDate = false } 
 
 export const createEvent = async (eventData, organizerId) => {
     validateEventData(eventData, { checkPastDate: true });
-    return await EventRepository.create({ ...eventData, organizer: organizerId });
+    return await eventRepository.create({ ...eventData, organizer: organizerId });
 };
 
 
 export const updateEvent = async (id, body, user) => {
-    const event = await EventRepository.findById(id);
+    const event = await eventRepository.findById(id);
     if (!event) throw fail(404, "No se encuentra el evento");
     if (user.role !== 'admin' && event.organizer.toString() !== user.id) {
         throw fail(403, "No tienes permiso para actualizar este evento");
@@ -41,18 +41,18 @@ export const updateEvent = async (id, body, user) => {
     if (event.status === 'cancelled') throw fail(400, "Un evento cancelado no puede modificarse");
     const data = Object.fromEntries(Object.entries(body).filter(([key]) => EDITABLE_FIELDS.includes(key)));
     validateEventData(data, { checkPastDate: true });
-    return await EventRepository.update(id, data);
+    return await eventRepository.update(id, data);
 };
 
 export const getEvent = async (id) => {
-    const event = await EventRepository.findById(id);
+    const event = await eventRepository.findById(id);
     if (!event) 
         throw fail(404, "No se encuentra el evento");
     return event;
 };
 
 export const updateEventStatus = async (id, status, user) => {
-    const event = await EventRepository.findById(id);
+    const event = await eventRepository.findById(id);
     if (!event) throw fail(404, "No se encuentra el evento");
     if (user.role !== 'admin' && event.organizer.toString() !== user.id) {
         throw fail(403, "No tienes permiso para actualizar este evento");
@@ -73,7 +73,7 @@ export const updateEventStatus = async (id, status, user) => {
     if(status === 'draft' && event.status !== 'draft') {
         throw fail(400, "Un evento solo puede volver a borrador si no fue publicado o finalizado");
     };
-    return await EventRepository.update(id, { status });
+    return await eventRepository.update(id, { status });
 };
 
 export const getEvents = async ( { page, limit, status, category, location,dateFrom,dateTo, sort } ) => {
@@ -105,7 +105,7 @@ export const getEvents = async ( { page, limit, status, category, location,dateF
     sort = sort ? { [sort]: 1 } : {};
     const skip = (page - 1) * limit;
     
-    const { events, total } = await EventRepository.findPaginated(filter, sort, skip, limit);
+    const { events, total } = await eventRepository.findPaginated(filter, sort, skip, limit);
     const totalPages = Math.ceil(total / limit);
     return { data: events, page, limit, total, totalPages };
 }; 
