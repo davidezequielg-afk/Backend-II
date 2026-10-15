@@ -1,9 +1,7 @@
 import passport  from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
-import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
-import { findUserByEmail, saveUser } from '../repositories/users.repository.js';
-import { hashPassword , comparePassword } from '../utils/hash.js';
-import { JWT_SECRET } from '../config/config.jwt.js';
+import { registerUser, loginUser } from '../services/users.service.js';
+
 
 
 // estrategia de registro
@@ -16,43 +14,7 @@ export const registerStrategy = new LocalStrategy(
             first_name,
             last_name,
           } = req.body;
-          if (!first_name || !last_name || !email || !password) {
-            const error = new Error("Faltan campos obligatorios");
-            error.statusCode = 400;
-            return done(error);
-          }
-          const normalizedEmail = email.trim().toLowerCase();
-      
-          const minLengthPassword = 8;
-          if (password.length < minLengthPassword) {
-            const error = new Error(`La contraseña debe tener al menos ${minLengthPassword} caracteres`);
-            error.statusCode = 400;
-            return done(error);
-          }
-
-          const emailRegex = /^[^\s@]+@[^\s@]+[.][^\s@]+$/;
-        if (!emailRegex.test(normalizedEmail)) {
-          const error = new Error("Formato de email inválido");
-          error.statusCode = 400;
-          return done(error);
-        }
-        const existingUser = await findUserByEmail(normalizedEmail);
-        if (existingUser) {
-        const error = new Error("El email ya está registrado");
-        error.statusCode = 409;
-        return done(error);
-        };
-    
-        const hashedPassword = await hashPassword(password);
-            const newUser = {
-            first_name,
-            last_name,
-            email: normalizedEmail,
-            password: hashedPassword,
-            role: 'user',
-        };
-    
-        const createdUser = await saveUser(newUser);
+        const createdUser = await registerUser({ email, password, first_name, last_name });
     
         return done(null, {
             id: createdUser._id,
@@ -68,40 +30,17 @@ export const registerStrategy = new LocalStrategy(
   });
   passport.use('register', registerStrategy);
 
-
 // estrategia de login
 
 export const loginStrategy = new LocalStrategy(
   { usernameField: 'email', passwordField: 'password' },
   async (email, password, done) => {
-  try {
-      if (!email || !password) {
-          const error = new Error("Faltan campos obligatorios");
-          error.statusCode = 400;
-          return done(error);
-        }
-  const normalizedEmail = email.trim().toLowerCase();
-  const user = await findUserByEmail(normalizedEmail);
-    if (!user) {
-      const error = new Error("Credenciales inválidas");
-        error.statusCode = 401;
+    try {
+      const user = await loginUser({ email, password });
+      return done(null, user);
+    } catch (error) {
       return done(error);
     }
-  const passwordMatch = await comparePassword(password, user.password);
-    if (!passwordMatch) {
-      const error = new Error("Credenciales inválidas");
-        error.statusCode = 401;
-      return done(error);
-    }
-  return done(null, {
-      id: user._id,
-      email: user.email,
-      role: user.role,
-  });
-  }
-  catch (error) {
-    return done(error);
-  }
   }
 );
 passport.use('login', loginStrategy);
