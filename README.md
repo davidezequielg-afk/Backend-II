@@ -45,21 +45,40 @@ Y tu servidor ya debe estar corriendo.
 - config:
 En esta carpeta haremos la configuración del puerto y del acceso a la base de datos.
 - controllers:
-En esta carpeta se crearan los archivos que reciban los requests y preparen los responses.
+En esta carpeta se encarga de recibir las request, extraer los datos del body, params o querys, llama al service y devuelve respuestas.
 - dao: 
-Aca reuniremos las consultas que van directamente a la base de datos.
+Esta carpeta es la única capa que importa los modelos de Mongoose y habla directamente con la base de datos
+- dto:
+En esta carpeta se encuentran los archivos que deciden que campos salen en las respuestas.
 - middlewares:
 Aca se encuentran las funciones que corren antes de que lleguen al controlador, son los validadores de cada request.
 - models:
 Aca vamos a definir la forma que tendran los datos de los eventos, usuarios.
 - repositories:
-Se encuentran los archivos que funcionaran como intermediarios entre los servicios y la base de datos.
+Esta es la carpeta que se encarga de utilizar el DAO y exportar metodos que van orientados al dominio que necesitemos.
 - routes:
 Aca vamos a definir los endpoints que vayamos a necesitar, importante a la hora de crear nuevos es que este mismo utilice el controller correspondiente.
 - services:
 Aca vamos a tener contenido toda la logica que tendra el negocio.
 - utils: 
-Aca se encuentran las fuciones que reutilizamos en todo el codigo. Cuidado con cambiarlas ya que podemos romper el sistema de gestion.
+Aca se encuentran las fuciones que reutilizamos en todo el codigo. Cuidado con cambiarlas ya que podemos romper el sistema.
+
+## Arquitectura en capas.
+La API separa responsabilidades en capas. Cada una cumple una sola tarea y solo se comunica con la capa que tiene al lado:
+
+```
+Request  → Route (+ middlewares) → Controller → Service → Repository → DAO → Modelo → Base de datos
+Response ← Controller ← DTO ← Service
+```
+
+| Capa | Responsabilidad | Regla |
+|---|---|---|
+| Route | Define el endpoint y los middlewares (sesión, rol, validación de credenciales). | Siempre usa el controller correspondiente. |
+| Controller | Extrae los datos del request, llama al service y devuelve la respuesta. | No importa modelos ni resuelve reglas de negocio. |
+| Service | Concentra la lógica de negocio: cupos, estados, duplicados, permisos y envío de email. | Consume repositories, nunca DAOs ni modelos. |
+| Repository | Expone métodos del dominio (`findByEmail`, `countActiveTickets`, `cancelTicket`). | Usa el DAO, no importa modelos. |
+| DAO | Ejecuta las consultas con métodos genéricos (`create`, `findById`, `findOne`, `find`, `update`, `count`). | Es el único que importa los modelos de Mongoose. |
+| DTO | Decide qué campos salen en cada respuesta. | Nunca expone el `password`. Si hay `populate`, también filtra los datos del documento relacionado. |
 
 ## Reglas de negocio.
 En la siguiente lista se redactaran las reglas que tiene el negocio con respecto a los eventos que se vayan creando:
@@ -166,8 +185,7 @@ El la seccion de "Endpoints disponibles" tenemos al que se llama: "GET /api/even
 - sort . Y este se encaga de ordenar los eventos por campo solicitado.
     ?sort=date
 
-### Respuestas disponibles.
-
+### Respuestas disponibles y manejo de errores
 - 200: usuario logeado,
 - 201: usuario registrado exitosamente,
 - 400: campos incompletos o formato inválido, para el caso de los Tickets se debe a cantidad inválida, evento no disponible o sin cupo suficiente.
@@ -176,6 +194,7 @@ El la seccion de "Endpoints disponibles" tenemos al que se llama: "GET /api/even
 - 404: objeto o consulta inexistente,
 - 409: email o ticket duplicado (email ya registrado, ticket ya registrado para este usuario),
 - 500: error interno del servidor,
+Para poder generar estos tipos de errores existe un middleware central que posee el formato adecuado para generar estos mismos.
 
 ## Registro de Usuarios.
 
@@ -254,7 +273,8 @@ Aqui vemos el current (lista de sesiones) antes de realizar el login correspondi
 
 ```json
 {
-  "message": "Usuario no autenticado"
+    "status": "error",
+    "message": "No autenticado"
 }
 ```
 
@@ -289,24 +309,21 @@ En esta prueba se puede ver cuales son los clientes creados, solo puede verlo un
       "first_name": "nombre-de-usuario",
       "last_name": "apellido-de-usuario",
       "email": "juan@example.com",
-      "role": "user",
-      "__v": 0
+      "role": "user"
     }
     {
-      "_id": "id-del-usuario",
+      "id": "id-del-usuario",
       "first_name": "admin",
       "last_name": "admin",
       "email": "admin@example.com",
-      "role": "admin",
-      "__v": 0
+      "role": "admin"
     },
     {
-      "_id": "id-del-usuario",
+      "id": "id-del-usuario",
       "first_name": "organizer",
       "last_name": "organizer",
       "email": "organizer@example.com",
-      "role": "organizer",
-      "__v": 0
+      "role": "organizer"
     }
   ]
 }
@@ -327,7 +344,7 @@ Aquí se veran los eventos que fueron creados. Este endpoint es de acceso public
     "total": 1,
     "totalPages": 1,
     "data": [{
-      "_id": "id-del-evento",
+      "id": "id-del-evento",
       "title": "titulo-del-evento",
       "description": "descripcion-del-evento",
       "date": "fecha-del-evento(2026-11-21T21:00:00.000Z)",
@@ -336,8 +353,7 @@ Aquí se veran los eventos que fueron creados. Este endpoint es de acceso public
       "capacity": 100,
       "price": 20000,
       "status": "estado-del-evento",
-      "organizer": "creador-del-evento",
-      "__v": 0
+      "organizer": "creador-del-evento"
   }]
   }
 }
@@ -353,7 +369,7 @@ Aquí se vera el evento por id. Este endpoint es de acceso publico, no hace falt
 {
   "status": "success",
   "payload": {
-      "_id": "id-del-evento",
+      "id": "id-del-evento",
       "title": "titulo-del-evento",
       "description": "descripcion-del-evento",
       "date": "fecha-del-evento(2026-11-21T21:00:00.000Z)",
@@ -362,8 +378,7 @@ Aquí se vera el evento por id. Este endpoint es de acceso publico, no hace falt
       "capacity": 100"(capacidad-del-evento)",
       "price": 20000"(precio-del-evento)",
       "status": "estado-del-evento",
-      "organizer": "creador-del-evento",
-      "__v": 0
+      "organizer": "creador-del-evento"
   }
 }
 ```
@@ -393,9 +408,9 @@ Aqui se podra ver los tickets vendidos de un evento en particular, el cual solo 
 - Respuesta esperada:
 ```json
 {
-        "_id": "id-del-ticket",
+        "id": "id-del-ticket",
         "user": {
-            "_id": "id-del-usuario",
+            "id": "id-del-usuario",
             "first_name": "nombre-del-usuario",
             "last_name": "apellido-del-usuario",
             "email": "mail-del-usuario"
@@ -406,8 +421,7 @@ Aqui se podra ver los tickets vendidos de un evento en particular, el cual solo 
         "reservationCode": "codigo-de-reserva",
         "cancelledAt": null,
         "createdAt": "hora-de-creacion-del-ticket",
-        "updatedAt": "hora-de-actualizacion-del-ticket",
-        "__v": 0
+        "updatedAt": "hora-de-actualizacion-del-ticket"
     }
 ```
 ![GET /api/events/:id/tickets](images/GET%20-api-events-id-tickets.png)
@@ -417,10 +431,10 @@ Aqui se podran ver los tickets comprados por el propio usuario, con titulo, fech
 - Respuesta esperada:
 ```json
 {
-        "_id": "id-del-ticket",
+        "id": "id-del-ticket",
         "user": "id-del-usuario",
         "event": {
-            "_id": "id-del-evento",
+            "id": "id-del-evento",
             "title": "titulo-del-evento",
             "date": "fecha-del-evento",
             "location": "lugar-del-evento"
@@ -430,8 +444,7 @@ Aqui se podran ver los tickets comprados por el propio usuario, con titulo, fech
         "reservationCode": "codigo-de-reserva",
         "cancelledAt": null,
         "createdAt": "hora-de-creacion-del-ticket",
-        "updatedAt": "hora-de-actualizacion-del-ticket",
-        "__v": 0
+        "updatedAt": "hora-de-actualizacion-del-ticket"
     }
 ```
 ![GET /api/tickets/my-tickets](images/GET%20-api-tickets--my-tickets.png)
@@ -463,7 +476,8 @@ En la siguiente imagen se ve como y cuales son los campos necesarios para la cre
 
 ```json
 {
-  "message": "El email ya está registrado"
+    "status": "error",
+    "message": "El email ya está registrado"
 }
 ```
 
@@ -510,7 +524,8 @@ En esta prueba se demuestra que primero hay que iniciar sesion antes de hacer un
 - Respuesta esperada:
 ```json
 {
-  "message": "Usuario no autenticado"
+    "status": "error",
+    "message": "No autenticado"
 }
 ```
 
@@ -523,7 +538,7 @@ En esta prueba veremos como subir un evento, (solo admitido para organizers, y a
 {
   "status": "success",
   "payload": {
-      "_id": "id-del-evento",
+      "id": "id-del-evento",
       "title": "titulo-del-evento",
       "description": "descripcion-del-evento",
       "date": "fecha-del-evento(2026-11-21T21:00:00.000Z)",
@@ -532,8 +547,7 @@ En esta prueba veremos como subir un evento, (solo admitido para organizers, y a
       "capacity": 100"(capacidad-del-evento)",
       "price": 20000"(precio-del-evento)",
       "status": "estado-del-evento",
-      "organizer": "creador-del-evento",
-      "__v": 0
+      "organizer": "creador-del-evento"
   }
 }
 ```
@@ -551,10 +565,9 @@ En este se muestra como se lleva a cabo la inscripcion a un evento. Para este pr
     "quantity": 10,
     "reservationCode": "codigo-de-reserva",
     "cancelledAt": null,
-    "_id": "id-del-ticket",
+    "id": "id-del-ticket",
     "createdAt": "fecha-de-creacion-del-ticket",
-    "updatedAt": "fecha-de-actualizacion-del-ticket",
-    "__v": 0
+    "updatedAt": "fecha-de-actualizacion-del-ticket"
 }
 ```
 
@@ -581,7 +594,7 @@ En este endpoint veremos como actualizar un evento, solo para admins y organizer
   "status": "success",
   "message": "Evento actualizado"
   "payload": [{
-      "_id": "id-del-evento",
+      "id": "id-del-evento",
       "title": "titulo-del-evento",
       "description": "descripcion-del-evento",
       "date": "fecha-del-evento(2026-11-21T21:00:00.000Z)",
@@ -607,7 +620,7 @@ En este endpoint veremos como actualizar el estado (status), de cada evento, sol
     "status": "success",
     "message": "El estado del evento ha sido actualizado  ",
     "payload": {
-        "_id": "6ac70aaba10cb2877e6e14b7",
+        "id": "6ac70aaba10cb2877e6e14b7",
         "title": "MotoCrash",
         "description": "Festival de Motos",
         "date": "2026-11-21T21:00:00.000Z",
@@ -616,8 +629,7 @@ En este endpoint veremos como actualizar el estado (status), de cada evento, sol
         "capacity": 227,
         "price": 20000,
         "status": "published",
-        "organizer": "6ac707e1e01f1191576e54d3",
-        "__v": 0
+        "organizer": "6ac707e1e01f1191576e54d3"
     }
 }
 ```
@@ -629,7 +641,7 @@ En este endpoint veremos la manera de cancelar un ticket. No lleva ningun Body. 
 - Respuesta esperada:
 ```json
 {
-    "_id": "id-del-ticket",
+    "id": "id-del-ticket",
     "user": "id-del-usuario-",
     "event": "id-del-evento",
     "status": "cancelled",
@@ -638,7 +650,6 @@ En este endpoint veremos la manera de cancelar un ticket. No lleva ningun Body. 
     "cancelledAt": "fecha-de-cancelacion-del-ticket",
     "createdAt": "fecha-de-creacion-del-ticket",
     "updatedAt": "fecha-de-actualizacion-del-ticket",
-    "__v": 0
 }
 ```
 
