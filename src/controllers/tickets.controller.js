@@ -3,7 +3,7 @@ import { TicketDTO } from "../dto/ticket.dto.js";
 
 export const createTicketController = async (req, res, next) => {
     try {
-        const { quantity } = req.body;
+        const { quantity } = req.body || {};
         const { eventId } = req.params;
         const user = req.user;
         const ticket = await createTicket(eventId, user, quantity);
