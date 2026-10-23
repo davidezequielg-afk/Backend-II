@@ -1,9 +1,22 @@
 import passport  from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
+import { Strategy as JWTStrategy } from 'passport-jwt';
 import { registerUser, loginUser } from '../services/users.service.js';
 import { UserDTO } from '../dto/user.dto.js';
+import { JWT_SECRET } from './config.jwt.js';
 
+const extractCookie = (req) => {
+  let token = null;
+  if (req && req.cookies) {
+    token = req.cookies['currentUser'];
+  }
+  return token;
+};
 
+const options = {
+  jwtFromRequest: extractCookie,
+  secretOrKey: JWT_SECRET,
+};
 
 // estrategia de registro
 
@@ -39,3 +52,16 @@ export const loginStrategy = new LocalStrategy(
   }
 );
 passport.use('login', loginStrategy);
+
+// estrategia JWT
+export const currentStrategy = new JWTStrategy(
+  options,
+  async (payload, done) => {
+    try {
+      return done(null, payload);
+    } catch (error) {
+      return done(error);
+    }
+  }
+);
+passport.use('current', currentStrategy);
