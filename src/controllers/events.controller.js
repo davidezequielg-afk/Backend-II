@@ -4,7 +4,8 @@ import { EventDTO } from "../dto/event.dto.js";
 export const eventsController = async (req, res, next) => {
   try {
     const events = await getEvents(req.query);
-    res.status(200).json({ status: 'success', payload: { page: events.page, limit: events.limit, total: events.total, totalPages: events.totalPages, data: events.data.map(event => new EventDTO(event)) } });
+    const { page, limit, total, totalPages } = events;
+    res.status(200).json({ status: 'success', data: events.data.map(event => new EventDTO(event)), page, limit, total, totalPages });
   } catch (error) {
     next(error);
   }
