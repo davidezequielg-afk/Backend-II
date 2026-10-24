@@ -32,8 +32,8 @@ export const createTicket = async (eventId, user, quantity) => {
     };
     
     const cantTickets = event.capacity - await ticketRepository.countActiveTickets(eventId);
-    if (Number(quantityInt) > cantTickets || cantTickets <= -1) {
-        throw fail(400, `No hay suficientes boletos disponibles para este evento.`);
+    if (Number(quantityInt) > cantTickets) {
+        throw fail(409, `No hay suficientes boletos disponibles para este evento`);
     };
     const userEmail = user.email;
     const ticket = await ticketRepository.create({ user: user.id, event: eventId, quantity: quantityInt, status: "confirmed", reservationCode: randomUUID() });
