@@ -67,7 +67,7 @@ export const cancelTicket = async (ticketId, user) => {
     if (ticket.status === "cancelled") {
         throw fail(400, "El boleto ya está cancelado");
     };
-    const updatedTicket = await ticketRepository.update(ticketId, { status: "cancelled" });
+    const updatedTicket = await ticketRepository.cancelTicket(ticketId);
 
     return updatedTicket;
 };
