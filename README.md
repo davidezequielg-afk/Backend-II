@@ -8,7 +8,11 @@
 - MONGODB.
 - MONGOOSE.
 - DOTENV.
-- NODEMAILER
+- PASSPORT.
+- JWT.
+- bcrypt.
+- COOKIE-PARSER.
+- NODEMAILER.
 
 ## Instalación.
 
@@ -17,7 +21,7 @@
 ```bash
 npm install
 ```
-3. Creamos el archivo .env, para copiarle dentro lo que se encuentra en el .env.example .
+3. Creamos el archivo .env, para copiarle dentro lo que se encuentra en el .env.example . Para completarlo con los valores propios, del servidor a crear.
 
 ## Variables de entorno a tener en cuenta.
 Dentro del archivo .env.example encontraremos todas las variables que se usan en nuestro programa, una vez que la copies en tu .env deberas completarle todos los campos de tu servidor, o cuales uses:
@@ -37,6 +41,10 @@ Dentro del archivo .env.example encontraremos todas las variables que se usan en
 Una vez completado los pasos anteriores, abrimos una terminal que este direccionada a la carpeta contenedora de la plataforma de gestion, y escribimos lo siguiente:
 ```bash
 npm run dev
+```
+O
+```bash
+npm start
 ```
 Y tu servidor ya debe estar corriendo.
 
@@ -99,7 +107,7 @@ Aca encontraremos tres estados por los que un ticket puede pasar:
 - pending : la inscripcion se esta procesando.
 - cancelled : ticket cancelado.
 
-### Flujo de inscripcion.
+## Flujo de inscripcion.
 En la siguiente lista se detalla como deben estar los parametros para la inscripcion a eventos:
 - "quantity" : es decir la cantidad de entradas a obtener debe ser un numero entero positivo, mayor a 0.
 - El evento debe existir.
@@ -130,11 +138,52 @@ Nos encontraremos con 3 roles, cada uno con sus permisos.
 - 'Organizer': usuario con accesos privilejiados, tiene permisos de creacion y modificación de eventos (siempre y cuando sean los creados por el mismo, si algun evento está creado por otro organizer no podran ser modificados).
 - 'admin': usuario con acceso completo, tiene permisos para realizar cualquier modificación de eventos, sin importar que usuario organizador lo haya creado.
 
+## Usuarios de prueba.
+### A continuacion se daran 3 usuarios de prueba para poder, tener ejemplos o realizar pruebas locales del servidor en actividad.
+
+- Usuario común:
+```json
+{
+  "first_name": "Usuario",
+  "last_name": "Prueba",
+  "email": "user@example.com",
+  "password": "user12345"
+}
+```
+- Usuario organizador:
+```json
+{
+  "first_name": "Organizer",
+  "last_name": "Prueba",
+  "email": "organizer@example.com",
+  "password": "organizer12345"
+}
+```
+- Usuario administrador:
+```json
+{
+  "first_name": "Admin",
+  "last_name": "Prueba",
+  "email": "admin@example.com",
+  "password": "admin12345"
+}
+```
+Para a la hora de registrar estos usuarios de prueba, o los reales, se deben hacer de la manera tradicional. Pero esto les pone por defecto `user`, para cambiar esto hay 2 maneras.
+- 1:
+Conectamos el server a mongosh, y le cargamos lo siguiente:
+```
+db.users.updateOne({ email: "organizer@example.com" }, { $set: { role: "organizer" } })
+db.users.updateOne({ email: "admin@example.com" }, { $set: { role: "admin" } })
+```
+Esto hara que se cambien los roles a los ultimos dos ejemplos.
+- 2:
+Se debe entrar a la base de datos, directamente desde el programa de MongoDBCompass, o el que usemos. Y cambiarle el rol desde 
+
 ## Endpoints disponibles.
 
 - GET /api/health . Genera una respuesta de si el servidor se encuentra en funcionamiento.
 
-- GET /api/sessions/current . Genera una lista de los datos de la cuenta logeada, solo puede ser vista por un admin.
+- GET /api/sessions/current . Genera una lista de los datos de la cuenta logeada.
 
 - GET /api/users . Permite ver los usuarios que se registraron. Solo permitido para admin.
 
@@ -188,11 +237,11 @@ El la seccion de "Endpoints disponibles" tenemos al que se llama: "GET /api/even
 ### Respuestas disponibles y manejo de errores
 - 200: usuario logeado,
 - 201: usuario registrado exitosamente,
-- 400: campos incompletos o formato inválido, para el caso de los Tickets se debe a cantidad inválida, evento no disponible o sin cupo suficiente.
+- 400: campos incompletos o formato inválido, para el caso de los Tickets se debe a cantidad inválida, evento no disponible,
 - 401: no existe una cookie de sesión, el token es inválido o venció,
 - 403: el usuario está autenticado, pero su rol no cuenta con el permisos para realizar accion,
 - 404: objeto o consulta inexistente,
-- 409: email o ticket duplicado (email ya registrado, ticket ya registrado para este usuario),
+- 409: email o ticket duplicado (email ya registrado, ticket ya registrado para este usuario) o cupos insuficientes para un evento,
 - 500: error interno del servidor,
 Para poder generar estos tipos de errores existe un middleware central que posee el formato adecuado para generar estos mismos.
 
@@ -205,6 +254,7 @@ Para poder generar estos tipos de errores existe un middleware central que posee
 - `password` : Contraseña (OBLIGATORIO(Debe contener al menos 8 caracteres)).
 
 El campo `role` no debe enviarse. Ya que el sistema lo designa automáticamente como `user`.
+Para los casos de `organizer` y `admin`, la creacion es exactamente igual. Lo que se debe cambiar es dentro de la base de datos directamente, y colocarle el rol a necesitar.
 
 #### Ejemplo de solicitud.
 A continuacion se ejemplifica la manera en la que debe estar el json de los datos necesarios:
@@ -236,11 +286,11 @@ A continuacion se ejemplifica la manera en la que debe estar el json de los dato
 ## Cierre de Sesion (Logout de Usuarios).
 
 ### Campos necesarios.
-Esn este caso no se esperan ni se necesitan campos para completar, ya que se hace borrando las cookies del login desde cada ordenador y de manera indeoendiente con cada usuario.
+En este caso no se esperan ni se necesitan campos para completar, ya que se hace borrando las cookies del login desde cada ordenador y de manera independiente con cada usuario.
 
 ## Creacion de eventos.
+Para la creacion de eventos se piden los siguientes campos que deben agregarse de manera obligatoria:
 
-### Campos necesarios y esperados.
 - `title`: Titulo del evento.
 - `description`: Descripcion del evento a crear.
 - `date`: Fecha y horario del evento.
@@ -249,9 +299,20 @@ Esn este caso no se esperan ni se necesitan campos para completar, ya que se hac
 - `capacity` : Capacidad que tendrá el evento.
 - `price` :  Precio que tendra cada entrada al evento.
 
+Al realizar la creacion del mismo, utilizando `POST /api/events`, este quedara en forma de `{ "status": "draft" }`, el cual mediante `PATCH /api/events/:id/status`, donde `:id` es el id del evento, deberemos actualizar a  `{ "status": "published" }`
+
+## Inscripcion a eventos.
+Luego de que un "admin" u "organizer" cree un evento, y lo actualice para que quede con un `{ "status": "published" }`, se podra comenzar a vender las entradas a dicho evento. Para esto los usuarios deben estar logeados, para que luego usando `POST /api/events/:eventId/tickets`, donde `:eventId` es el id del evento, ingrese el siguiente cuerpo dentro de un JSON:
+```json
+{ "quantity": 1 } // Donde la 1 es el numero de entradas a comprar 
+```
+De esta manera el sistema validara que haya los suficientes para la adquisicion de dicha/s entradas, en el caso de fallar se lanzará la respuesta mediante el error y el mensaje correspondiente.
+En caso de no fallar, en el ticket se creara el codigo de reserva y se enviara un mail de confirmacion al email que tiene el usuario.
+Si el usuario decide cancelar su entrada o reserva, debe ingresar a `PATCH /api/tickets/:ticketId/cancel`, donde `:ticketId` se debe reemplazar por el id del ticket que se quiera cancelar
+
+
 ## Evidencias de Uso.
 ### A continuacios se veran, en formato de imagenes, las evidencias de como se verian el uso de las RUTAS mediante el uso del programa de POSTMAN.
-
 
 #### Endpoints GET
 - GET /api/health .
@@ -310,7 +371,7 @@ En esta prueba se puede ver cuales son los clientes creados, solo puede verlo un
       "last_name": "apellido-de-usuario",
       "email": "juan@example.com",
       "role": "user"
-    }
+    },
     {
       "id": "id-del-usuario",
       "first_name": "admin",
@@ -337,25 +398,25 @@ Aquí se veran los eventos que fueron creados. Este endpoint es de acceso public
 
 ```json
 {
-  "status": "success",
-  "payload": {
+    "status": "success",
+    "data": [
+        {
+        "id": "id-del-evento",
+        "title": "titulo-del-evento",
+        "description": "descripcion-del-evento",
+        "date": "fecha-del-evento(2026-11-21T21:00:00.000Z)",
+        "location": "lugar-del-evento",
+        "category": "categoria-del-evento",
+        "capacity": 100,
+        "price": 20000,
+        "status": "estado-del-evento",
+        "organizer": "creador-del-evento"
+        }
+    ],
     "page": 1,
     "limit": 10,
-    "total": 1,
-    "totalPages": 1,
-    "data": [{
-      "id": "id-del-evento",
-      "title": "titulo-del-evento",
-      "description": "descripcion-del-evento",
-      "date": "fecha-del-evento(2026-11-21T21:00:00.000Z)",
-      "location": "lugar-del-evento",
-      "category": "categoria-del-evento",
-      "capacity": 100,
-      "price": 20000,
-      "status": "estado-del-evento",
-      "organizer": "creador-del-evento"
-  }]
-  }
+    "total": 2,
+    "totalPages": 1
 }
 ```
 
@@ -367,16 +428,17 @@ Aquí se vera el evento por id. Este endpoint es de acceso publico, no hace falt
 
 ```json
 {
-  "status": "success",
-  "payload": {
+    "status": "success",
+    "message": "Se encontró el evento buscado",
+    "payload": {
       "id": "id-del-evento",
       "title": "titulo-del-evento",
       "description": "descripcion-del-evento",
       "date": "fecha-del-evento(2026-11-21T21:00:00.000Z)",
       "location": "lugar-del-evento",
       "category": "categoria-del-evento",
-      "capacity": 100"(capacidad-del-evento)",
-      "price": 20000"(precio-del-evento)",
+      "capacity": 100,
+      "price": 20000,
       "status": "estado-del-evento",
       "organizer": "creador-del-evento"
   }
@@ -391,14 +453,25 @@ Ejemplo: "GET /api/events?status=published&category=Festival&page=2&limit=5"
 - Repuesta esperada:
 ```json
 {
-    "status": "success",
-    "payload": {
-        "page": 2,
-        "limit": 5,
-        "total": 0,
-        "totalPages": 0,
-        "data": []
+  "status": "success",
+  "data": [
+    {
+      "id": "id-del-evento",
+      "title": "titulo-del-evento",
+      "description": "descripcion-del-evento",
+      "date": "fecha-del-evento(2026-11-21T21:00:00.000Z)",
+      "location": "lugar-del-evento",
+      "category": "categoria-del-evento",
+      "capacity": 100,
+      "price": 20000,
+      "status": "estado-del-evento",
+      "organizer": "creador-del-evento"
     }
+  ],
+  "page": 1,
+  "limit": 5,
+  "total": 1,
+  "totalPages": 1
 }
 ```
 ![GET /api/events con parametros](images/GET%20-api-events-con-filtros.png)
@@ -408,21 +481,26 @@ Aqui se podra ver los tickets vendidos de un evento en particular, el cual solo 
 - Respuesta esperada:
 ```json
 {
+    "status": "success",
+    "payload": [
+        {
         "id": "id-del-ticket",
         "user": {
             "id": "id-del-usuario",
             "first_name": "nombre-del-usuario",
             "last_name": "apellido-del-usuario",
             "email": "mail-del-usuario"
-        },
+            },
         "event": "id-del-evento",
         "status": "estado-del-ticket",
-        "quantity": 1,
+        "quantity": "cantidad-de-tickets",
         "reservationCode": "codigo-de-reserva",
-        "cancelledAt": null,
+        "cancelledAt": "hora-de-cancelacion-del-ticket",
         "createdAt": "hora-de-creacion-del-ticket",
         "updatedAt": "hora-de-actualizacion-del-ticket"
-    }
+        }
+    ]
+}
 ```
 ![GET /api/events/:id/tickets](images/GET%20-api-events-id-tickets.png)
 
@@ -431,6 +509,9 @@ Aqui se podran ver los tickets comprados por el propio usuario, con titulo, fech
 - Respuesta esperada:
 ```json
 {
+    "status": "success",
+    "payload": [
+        {
         "id": "id-del-ticket",
         "user": "id-del-usuario",
         "event": {
@@ -440,12 +521,14 @@ Aqui se podran ver los tickets comprados por el propio usuario, con titulo, fech
             "location": "lugar-del-evento"
         },
         "status": "estado-del-ticket",
-        "quantity": 1,
+        "quantity": "cantidad-de-tickets",
         "reservationCode": "codigo-de-reserva",
-        "cancelledAt": null,
+        "cancelledAt": "hora-de-cancelacion-del-ticket",
         "createdAt": "hora-de-creacion-del-ticket",
         "updatedAt": "hora-de-actualizacion-del-ticket"
-    }
+        }
+    ]
+}
 ```
 ![GET /api/tickets/my-tickets](images/GET%20-api-tickets--my-tickets.png)
 
@@ -544,8 +627,8 @@ En esta prueba veremos como subir un evento, (solo admitido para organizers, y a
       "date": "fecha-del-evento(2026-11-21T21:00:00.000Z)",
       "location": "lugar-del-evento",
       "category": "categoria-del-evento",
-      "capacity": 100"(capacidad-del-evento)",
-      "price": 20000"(precio-del-evento)",
+      "capacity": 100,
+      "price": 20000,
       "status": "estado-del-evento",
       "organizer": "creador-del-evento"
   }
@@ -559,15 +642,18 @@ En este se muestra como se lleva a cabo la inscripcion a un evento. Para este pr
 - Respuesta esperada:
 ```json
 {
-    "user": "id-del-usuario",
-    "event": "id-del-evento",
-    "status": "estado-del-ticket",
-    "quantity": 10,
-    "reservationCode": "codigo-de-reserva",
-    "cancelledAt": null,
-    "id": "id-del-ticket",
-    "createdAt": "fecha-de-creacion-del-ticket",
-    "updatedAt": "fecha-de-actualizacion-del-ticket"
+    "status": "success",
+    "payload": {
+        "id": "id-del-ticket",
+        "user": "id-del-usuario",
+        "event": "id-del-evento",
+        "status": "estado-del-ticket",
+        "quantity": 1,
+        "reservationCode": "codigo-de-reserva",
+        "cancelledAt": null,
+        "createdAt": "fecha-de-creacion-del-ticket",
+        "updatedAt": "fecha-de-actualizacion-del-ticket"
+    }
 }
 ```
 
@@ -578,6 +664,7 @@ Que es lo que pasa cuando se intenta comprar nuevamente un ticket desde el mismo
 - Respuesta esperada:
 ```json
 {
+    "status": "error",
     "message": "Ya existe un boleto para este usuario en el mismo evento"
 }
 ```
@@ -592,7 +679,7 @@ En este endpoint veremos como actualizar un evento, solo para admins y organizer
 ```json
 {
   "status": "success",
-  "message": "Evento actualizado"
+  "message": "Evento actualizado",
   "payload": [{
       "id": "id-del-evento",
       "title": "titulo-del-evento",
@@ -600,8 +687,8 @@ En este endpoint veremos como actualizar un evento, solo para admins y organizer
       "date": "fecha-del-evento(2026-11-21T21:00:00.000Z)",
       "location": "lugar-del-evento",
       "category": "categoria-del-evento",
-      "capacity": 100"(capacidad-del-evento)",
-      "price": 20000"(precio-del-evento)",
+      "capacity": 100,
+      "price": 20000,
       "status": "estado-del-evento",
       "organizer": "creador-del-evento"
   }]
@@ -641,21 +728,47 @@ En este endpoint veremos la manera de cancelar un ticket. No lleva ningun Body. 
 - Respuesta esperada:
 ```json
 {
-    "id": "id-del-ticket",
-    "user": "id-del-usuario-",
-    "event": "id-del-evento",
-    "status": "cancelled",
-    "quantity": 10,
-    "reservationCode": "codigo-de-reserva",
-    "cancelledAt": "fecha-de-cancelacion-del-ticket",
-    "createdAt": "fecha-de-creacion-del-ticket",
-    "updatedAt": "fecha-de-actualizacion-del-ticket",
+    "status": "success",
+    "payload": {
+        "id": "id-del-ticket",
+        "user": "id-del-usuario",
+        "event": "id-del-evento",
+        "status": "estado-del-ticket",
+        "quantity": 1,
+        "reservationCode": "codigo-de-reserva",
+        "cancelledAt": "fecha-de-cancelacion-del-ticket",
+        "createdAt": "fecha-de-creacion-del-ticket",
+        "updatedAt": "fecha-de-actualizacion-del-ticket"
+    }
 }
 ```
 
 ![PATCH /api/tickets/:id/cancel](images/PATCH%20-api-tickets--id-cancel.png)
 
-## Estrategias de autenticación
-### Para uso de autenticadores externos
+## Flujo de autenticación
+### Para uso de usuarios.
+- 1) Luego de realizar el registro en:
+`POST /api/sessions/register`.
+Este genera un rol de usuario ("user"), a la persona que este registrandose en nuestro sistema.
+- 2) Una vez registrado, se procede al inicio de sesion:
+`POST /api/sessions/login`.
+Una vez que iniciamos sesion en el sistema, se genera el JWT, el cual se guarda de manera automatica en el `httpOnly` con el nombre de `currentUser`. El tiempo de sesion se puede configurar en el `JWT_EXPIRES_IN`, ya que este se encarga de dar la duracion del token antes de su vencimiento y expirar la sesion.
+- 3) Cuando ya se realizo el login, la cookie viaja sola y la estrategia `current` que tiene PASSPORT, valida que sea una cookie real y utilizable para dicha sesion.
+- 4) Para saber los datos de la persona o usuario que realizo el login debemos entrar a `GET /api/sessions/current`, el cual listara los datos que pueden ser visibles.
+- 5) Por último si el usuario quiere cerrar la sesion, se debe borrar la cookie, y la manera mas sencilla para todos los usuarios es utilizando `POST /api/sessions/logout`, el cual realiza todo ese trabajo y hace que el `current` pase a dar 401 .
+
+### Flujo de inscripcion
+Para hacerlo un poco mas entendible quedaria asi:
+- 1) Un organizer o admin crea el evento (draft).
+- 2) Lo publica con PATCH.
+- 3) El user se inscribe con POST /api/events/:eventId/tickets.
+- 4) Se valida estado, cupo y duplicado.
+- 5) Se crea el ticket y se manda el email.
+- 6) Cancelar libera el cupo.
+
+
+ Vale aclarar que el current no lleva en ningun aspecto contraseñas. Unicamente id, email y role. 
+
+### Para uso de autenticadores externos.
 - Desde ahora la autenticación se encuentra centralizada en `src/config/passport.config.js` mediante el uso de las estrategias de Passport: `register`, `login` y `current`
 - Esto permitirá agregar futuros proveedores de autenticación como por ejemplo, Google o GitHub, dado que no haría falta cambiar o modificar el archivo `app.js`
